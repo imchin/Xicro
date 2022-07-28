@@ -1,0 +1,6 @@
+Idmcu: 1
+Namespace: "Demo"
+Port: "/dev/ttyACM0"
+Setup_Publisher: [          [1,"Imu_arduino","Imu.msg"], [2,"DemoInput","DemoInput.msg"]    ]
+Setup_Subscriber: [         [40,"DemoOutput","DemoOutput.msg"]    ]
+path_arduino: "arduino"

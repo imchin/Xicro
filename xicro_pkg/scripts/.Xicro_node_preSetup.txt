@@ -1,0 +1,875 @@
+
+
+import math
+from pprint import pprint
+import rclpy
+from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
+import numpy as np
+import os
+import yaml
+import serial
+from xicro_interfaces.msg import *
+import struct
+from threading import Thread
+
+import threading
+from std_msgs.msg import UInt64
+import time
+import multiprocessing as mp
+import sys
+
+
+def checkNofdata(dataType):
+    S=dataType.find("[")
+    F= dataType.find("]")
+    if(S!=-1 and F!=-1):
+        return int(dataType[S+1:F])
+    else:
+        return 1
+def typetoProtocol(typee,Nofdata):
+    ans=0
+    Nofbyte=0
+    if(typee=="uint8"):
+        ans=  8
+        Nofbyte=1
+    elif(typee=="uint16"):
+        ans=  16
+        Nofbyte=2
+    elif(typee=="uint32"):
+        ans=  32
+        Nofbyte=4
+    elif(typee=="uint64"):
+        ans=  64
+        Nofbyte=8
+    elif(typee=="int8"):
+        ans=  18
+        Nofbyte=1
+    elif(typee=="int16"):
+        ans=  116
+        Nofbyte=2
+    elif(typee=="int32"):
+        ans=  132
+        Nofbyte=4
+    elif(typee=="int64"):
+        ans=  164
+    elif(typee=="float32"):
+        ans=  111
+        Nofbyte=4
+    elif(typee=="float64" ):
+        ans= 222
+        Nofbyte=8
+    elif(typee=="string" ):
+        ans= 242
+        Nofbyte=888
+    elif(typee=="bool" ):
+        ans= 88
+        Nofbyte=1
+    if(Nofdata==1):
+        return ans,Nofbyte
+    elif(typee=="bool" ):
+        return ans+1,999
+    else:
+        return ans+1,Nofbyte
+
+
+
+
+
+def create_N_topic(self,name,interfaces):
+    try:
+        for i in range (0,len(interfaces)):
+            msg= interfaces[i][0:len(interfaces[i])-4]
+            interfaces[i] = self.create_publisher(globals()[msg] , name[i], 10)
+            print('Open Topic Name : '+name[i] +"  >>>>  Use msg name : "+ msg)
+        print("Open Topic All Done.")
+        return  interfaces
+    except:
+        print("Open Topic Fail.")
+        return 0
+
+def bufferToType(BUFFER,Typee):
+    if(Typee== "uint8" or Typee== "uint16" or Typee== "uint32" or Typee== "uint64"):
+        bytes_val = bytearray(BUFFER)
+        return int.from_bytes(bytes_val, byteorder="big",signed=0) 
+    elif(Typee=="int8" or Typee =="int16" or Typee== "int32" or Typee== "int64"):
+        bytes_val = bytearray(BUFFER)
+        return int.from_bytes(bytes_val, byteorder="big",signed=1)  
+    elif(Typee=="float32" ):
+        bytes_val = bytearray(BUFFER)
+        return struct.unpack('<f', bytes_val)[0]
+        
+    elif(Typee=="float64"):
+        bytes_val = bytearray(BUFFER)
+        return struct.unpack('>d', bytes_val)[0]
+
+
+
+
+
+
+class Publisher_node(Node):
+
+    def __init__(self):
+        super().__init__('Xicro_Publisher_Node')
+        self.Idmsg , self.nametopic ,  self.interfaceTopic ,self.dataType , self.dataName ,self.datagrab ,self.Nofdata,self.Protocoltype,self.byteTograb= setup_var_protocol()
+        # print(self.Idmsg , self.nametopic ,  self.interfaceTopic ,self.dataType , self.dataName ,self.datagrab ,self.Nofdata)
+        self.emptydatagrab=self.datagrab.copy()
+        self.obj= create_N_topic(self,self.nametopic,self.interfaceTopic.copy())
+       
+
+
+    def pubbb(self,Ongrab,OnIdmsg):
+        for i in range(0,len(self.Idmsg)):
+            if(self.Idmsg[i]==OnIdmsg):
+                index=i
+
+        msg= self.interfaceTopic[index][0:len(self.interfaceTopic[index])-4]
+        msg=globals()[msg]()
+        # print(msg)
+        # print(self.dataName[index])
+        # print(self.Nofdata[index])
+        # print(Ongrab)
+        for i in range(0,len(self.Nofdata[index])):
+            for j in range(0,self.Nofdata[index][i]):
+                if(self.Nofdata[index][i]==1):
+                    exec("%s = %s" % (("msg."+self.dataName[index][i]) ,"Ongrab[i]") )
+                else:
+                    exec("%s = %s" % (("msg."+self.dataName[index][i]+"["+str(j)+"]") ,"Ongrab[i][j]") )
+        # print(msg)
+        self.obj[index].publish(msg)
+
+
+
+
+class Subscriber_node(Node):
+    def __init__(self,Obj_uart):
+        super().__init__('Xicro_Subscriber_Node')
+        self.Obj_uart = Obj_uart
+
+        
+        self.subscription = self.create_subscription(UInt64,'long',self.listener_callback,10)
+        self.subscription  # prevent unused variable warning
+        self.CRC=0
+        self.crcc=CRC8_Xicro()
+        time.sleep(1)
+
+ 
+        
+
+    def _SendStart(self):
+        start=[73,109,64,99]
+        self.CRC=self.crcc.CheckList(self.CRC,start)
+        self.Obj_uart.ser.write(bytearray(start))
+        return 1
+    def _SendStop(self):
+        stop=[126,126]
+        self.CRC=self.crcc.CheckList(self.CRC,stop)
+        self.Obj_uart.ser.write(bytearray(stop)) 
+        return 1
+    def _SendContinue(self):
+        con=[42,42]
+        self.CRC=self.crcc.CheckList(self.CRC,con)
+        self.Obj_uart.ser.write(bytearray(con))
+        return 1
+    def _SendCRC(self):
+        crc=[self.CRC]
+        self.Obj_uart.ser.write(bytearray(crc))
+    def _SendSignature(self,Idmcu,Mode):
+        buff=[0]
+        buff[0]=Idmcu<<4
+        buff[0]=buff[0]|Mode
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendIdtopic(self,Idtopic):
+        buff=[Idtopic&0xFF]
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendUint8(self,data,len):
+        if(len>1):
+            buff=[9]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i]&0xff)
+        else:
+            buff=[8,0]
+            buff[1]=data&0xff
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendUint16(self,data,len):
+        if(len>1):
+            buff=[17]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 8 & 0xFF)
+                buff.append(data[i] >> 0 & 0xFF)
+        else:
+            buff=[16]
+            buff.append(data >> 8 & 0xFF)
+            buff.append(data >> 0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendUint32(self,data,len):
+        if(len>1):
+            buff=[33]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+        else:
+            buff=[32]
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendUint64(self,data,len):
+        if(len>1):
+            buff=[65]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 56 & 0xFF)
+                buff.append(data[i] >> 48 & 0xFF)
+                buff.append(data[i] >> 40 & 0xFF)
+                buff.append(data[i] >> 32 & 0xFF)
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+        else:
+            buff=[64]
+            buff.append(data >> 56 & 0xFF)
+            buff.append(data >> 48 & 0xFF)
+            buff.append(data >> 40 & 0xFF)
+            buff.append(data >> 32 & 0xFF)
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+
+    def _SendInt8(self,data,len):
+        if(len>1):
+            buff=[9]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i]&0xff)
+        else:
+            buff=[8,0]
+            buff[1]=data&0xff
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendInt16(self,data,len):
+        if(len>1):
+            buff=[17]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 8 & 0xFF)
+                buff.append(data[i] >> 0 & 0xFF)
+        else:
+            buff=[16]
+            buff.append(data >> 8 & 0xFF)
+            buff.append(data >> 0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendInt32(self,data,len):
+        if(len>1):
+            buff=[33]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+        else:
+            buff=[32]
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendInt64(self,data,len):
+        if(len>1):
+            buff=[65]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 56 & 0xFF)
+                buff.append(data[i] >> 48 & 0xFF)
+                buff.append(data[i] >> 40 & 0xFF)
+                buff.append(data[i] >> 32 & 0xFF)
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+            
+        else:
+            buff=[64]
+            buff.append(data >> 56 & 0xFF)
+            buff.append(data >> 48 & 0xFF)
+            buff.append(data >> 40 & 0xFF)
+            buff.append(data >> 32 & 0xFF)
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+
+    def _SendString(self,data,lenn):
+        if(lenn>1):
+            buff=[243]
+            buff.append(lenn&0xFF)
+            for i in range (0,lenn):
+                data[i]=data[i].encode()
+                txt=bytearray(data[i])
+                buff.extend(list(txt))
+                buff.extend([42,126])
+        else:
+            buff=[242]
+            data=data.encode()
+            txt=bytearray(data)
+            buff.extend(list(txt))
+            buff.extend([42,126])
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendFloat32(self,data,lenn):
+        if(lenn>1):
+            buff=[112]
+            buff.append(lenn&0xFF)
+            for i in range (0,lenn):
+                ff=bytearray(struct.pack(">f", data[i]))
+                buff.extend(list(ff))
+        else:
+            buff=[111]
+            ff=bytearray(struct.pack(">f", data))
+            buff.extend(list(ff))
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendFloat64(self,data,lenn):
+        if(lenn>1):
+            buff=[223]
+            buff.append(lenn&0xFF)
+            for i in range (0,lenn):
+                ff=bytearray(struct.pack(">d", data[i]))
+                buff.extend(list(ff))
+        else:
+            buff=[222]
+            ff=bytearray(struct.pack(">d", data))
+            buff.extend(list(ff))
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+    def _SendBool(self,data,lenn,flagCon):
+        if(lenn>1):
+            sizee=2
+            sizee=sizee+ math.ceil(lenn/8.0)
+            buff=[]
+            for i in range(0,sizee):
+                buff.append(0)
+            # print(buff)
+            buff[0]=89
+            buff[1]=lenn & 0xFF
+            onbyte=2
+            j=0
+            for i in range(0,lenn):
+                data[i]=data[i] & 0x01
+                buff[onbyte]= buff[onbyte] | (data[i] << j)
+                if(j == 7):
+                    onbyte=onbyte+1
+                    j=0
+                else:
+                    j=j+1
+        else:
+            buff=[88]
+            if(data==True):
+                if(flagCon):
+                    buff.extend([250,250])
+                else:
+                    buff.extend([254,254])
+            else:
+                if(flagCon):
+                    buff.extend([47,47])
+                else:
+                    buff.extend([127,127])     
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Obj_uart.ser.write(bytearray(buff))
+       
+
+    def listener_callback(self, msg):
+        print(msg)
+
+    
+       
+
+class ThreadThree(Node):
+    def __init__(self,dma):
+        super().__init__('ThreadThree')       
+       
+
+
+
+
+
+
+
+
+def Receive_uart(Obj_uart): #processer 1
+    print("Start Receive Uart : "+ Obj_uart.port)
+    while(1):
+        # Obj_uart.count.value=Obj_uart.count.value+1
+        try:
+            s = Obj_uart.ser.read()
+            Obj_uart.Buff[Obj_uart.index.value]=(int.from_bytes(s, byteorder="big",signed=0) )
+            Obj_uart.index.value = (Obj_uart.index.value + 1 )%1000
+        except:
+            1
+
+def Protocol_XicroToRos_spin(Obj_uart): #processer 2
+    print("XicroToRos_spin")
+    Pn= Publisher_node()    # create publisher object
+
+    crcc=CRC8_Xicro() # create crc object
+    crcc.begin(Obj_uart.Buff)  # crc begin
+    state=0
+    Idmsg,nametopic,interfacetopic,dataType,dataName,datagrab,NofData,datatypeProtocol,byteTograb=setup_var_protocol() # get variable from yaml
+ 
+ 
+
+    OnIdmsg=0
+    Ongrab=[]
+    Ontype=[]
+    OnNofdata=[]
+    OntypeIndex=0
+    OntypeProtocol=[]
+    OnbyteTograb=[]
+    while(1):
+        # v2.value=v2.value+1
+        # print(v.value)
+        # q=[73,73]
+        # Obj_uart.ser.write(bytearray(q))
+        # Obj_uart.count2.value=Obj_uart.count2.value+1
+        try:
+            if(Obj_uart.indexpre.value != Obj_uart.index.value):  # state machine
+                # print(Obj_uart.Buff[Obj_uart.indexpre.value])
+
+
+                if(state==0 and Obj_uart.Buff[Obj_uart.indexpre.value] == 73 ):
+                    state=1
+                elif(state==1 and Obj_uart.Buff[Obj_uart.indexpre.value]  == 109 ):
+                    state=2
+                elif(state==2 and Obj_uart.Buff[Obj_uart.indexpre.value] == 64 ):
+                    state=3 
+                elif(state==3 and Obj_uart.Buff[Obj_uart.indexpre.value] == 99 ):
+                    # print("Done check Start")
+                    state=4
+                elif(state==4):  # signature
+                    # print("Idmcu=",Idmcu)
+                    if( (int( (Obj_uart.Buff[Obj_uart.indexpre.value] ))&0b11110000 )>>4 == Idmcu  and int(Obj_uart.Buff[Obj_uart.indexpre.value])&0b1111 == 4  ):
+                        crcc.resetCRC()
+                        # print("Handshaking Complete.")
+                        state=5
+                    else:
+                        print("Fail handshake")
+                        state=0
+                elif(state==5):   # On id msg xxx
+                    for i in range (0,len(Idmsg)):
+                        if(Obj_uart.Buff[Obj_uart.indexpre.value] == Idmsg[i]):
+                            # print(Idmsg)
+                            # print(dataType)
+                            # print(datagrab)
+                            OnIdmsg=Idmsg[i]
+                            Ongrab=datagrab[i].copy()
+                            Ontype=dataType[i].copy()
+                            OnNofdata=NofData[i].copy()
+                            OntypeProtocol=datatypeProtocol[i].copy()
+                            OntypeIndex=-1
+                            OnbyteTograb=byteTograb[i].copy()
+                            # print("Ongrab",Ongrab)
+                            # print("Ontype",Ontype)
+                            # print("OnNof data",OnNofdata)
+                            # print("OnProtocol",OntypeProtocol)
+                            # print("OnbyteTograb",OnbyteTograb)
+                            state=6
+                            break
+                        else:
+                            state=0
+                elif(state==6):
+                    OntypeIndex=OntypeIndex+1
+                    # print("ONTYPEEEINDEX",OntypeIndex)
+                    # print("dddd",Obj_uart.Buff[Obj_uart.indexpre.value] ,OntypeProtocol[OntypeIndex])
+                
+                    if( Obj_uart.Buff[Obj_uart.indexpre.value] == OntypeProtocol[OntypeIndex]):
+                        if(OntypeProtocol[OntypeIndex]==242 ):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]    
+                            PASSNround=0
+                            TEMPstring=""
+                            state=111  # getString
+                        elif(OntypeProtocol[OntypeIndex]==243):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]    
+                            PASSNround=0
+                            TEMPstring=""
+                            state=110  # check N of data is correct
+                        elif(OntypeProtocol[OntypeIndex]==88):
+                            state=120  # get 1 Bool
+                        elif(OntypeProtocol[OntypeIndex]==89):
+                            GETNbool=OnNofdata[OntypeIndex]  
+                            GETNround=math.ceil(OnNofdata[OntypeIndex]/8.00) 
+                            COUNTbuffin=0
+                            TEMPbool=[]  
+                            # print("GETNbool=",GETNbool)
+                            # print("Bool round=",GETNround)
+                            state=129  # get N Bool
+                        elif(OntypeProtocol[OntypeIndex]== 8 or OntypeProtocol[OntypeIndex]==16 or OntypeProtocol[OntypeIndex]==32 or OntypeProtocol[OntypeIndex]==64 or OntypeProtocol[OntypeIndex]==18 or OntypeProtocol[OntypeIndex]==116 or OntypeProtocol[OntypeIndex]==132 or OntypeProtocol[OntypeIndex]==164 or OntypeProtocol[OntypeIndex]==111 or OntypeProtocol[OntypeIndex]==222 ):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]    
+                            PASSNround=0
+                            COUNTbuffin=0
+                            TEMPbuff=[]
+                            state=200  # get1ofdata
+                        elif(OntypeProtocol[OntypeIndex]== 9 or OntypeProtocol[OntypeIndex]==17 or OntypeProtocol[OntypeIndex]==33 or OntypeProtocol[OntypeIndex]==65 or OntypeProtocol[OntypeIndex]==19 or OntypeProtocol[OntypeIndex]==117 or OntypeProtocol[OntypeIndex]==133 or OntypeProtocol[OntypeIndex]==165 or OntypeProtocol[OntypeIndex]==112 or OntypeProtocol[OntypeIndex]==223 ):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]    
+                            PASSNround=0
+                            COUNTbuffin=0
+                            TEMPbuff=[]
+                            state=201  # getNofdata
+                        else:
+                            state=0
+                    else:
+                        state=0 
+
+                elif(state==129):
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==GETNbool):
+                        state=130
+                    else:
+                        state=0
+                elif(state==130): 
+                    TEMPbool.append(int(Obj_uart.Buff[Obj_uart.indexpre.value]))
+                    COUNTbuffin=COUNTbuffin+1
+                    if(COUNTbuffin==GETNround):
+                        for i in range(0,COUNTbuffin):
+                            for j in range(0,GETNbool):
+                                boolnow = (int(TEMPbool[i]) >> (j%8) )& 0x01
+                                # print("boolnow=",boolnow,TEMPbool[i])
+                                if(boolnow==1):
+                                    Ongrab[OntypeIndex][j]= True
+                                else:
+                                    Ongrab[OntypeIndex][j]= False
+
+
+                        state=44
+                    else:
+                        state=130
+                
+
+
+                elif(state==120):
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==250):
+                        state=121 # to check true and continue
+                    elif(Obj_uart.Buff[Obj_uart.indexpre.value]==47):
+                        state=122 # to check false and continue
+                    elif(Obj_uart.Buff[Obj_uart.indexpre.value]==254):
+                        state=123 # to check true and stop
+                    elif(Obj_uart.Buff[Obj_uart.indexpre.value]==127):
+                        state=124 # to check false and stop
+                    else:
+                        state=0
+                elif(state==121): 
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==250):
+                        Ongrab[OntypeIndex]=True
+                        # print(Ongrab)
+                        state=6 # confirm continue
+                    else:
+                        state=0
+                elif(state==122): 
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==47):
+                        Ongrab[OntypeIndex]=False
+                        # print(Ongrab)
+                        state=6 # confirm continue
+                    else:
+                        state=0
+                elif(state==123): 
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==254):
+                        Ongrab[OntypeIndex]=True
+                        # print(Ongrab)
+                        state=426 # confirm stop
+                    else:
+                        state=0
+                elif(state==124): 
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==127):
+                        Ongrab[OntypeIndex]=False
+                        # print(Ongrab)
+                        state=426 # confirm stop
+                    else:
+                        state=0
+
+
+
+                elif(state==201):
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==GETNround): # is correct N of data
+                        state=200
+                    else:
+                        state=0
+                        
+                elif(state==200):   
+                    TEMPbuff.append(int(Obj_uart.Buff[Obj_uart.indexpre.value]))
+                    COUNTbuffin=COUNTbuffin+1
+
+                    if(COUNTbuffin==OnbyteTograb[OntypeIndex]):         
+                        if(GETNround==1):
+                            # print(TEMPbuff)
+                            Ongrab[OntypeIndex]=bufferToType(TEMPbuff,Ontype[OntypeIndex])
+                        else:
+                            Ongrab[OntypeIndex][PASSNround]= bufferToType(TEMPbuff,Ontype[OntypeIndex])
+                        TEMPbuff=[]
+                        COUNTbuffin=0
+                        PASSNround=PASSNround+1
+            
+                        
+                        
+                    if(PASSNround==GETNround):
+                        state=44 # main check
+                    else:
+                        state=200
+                    
+
+                elif(state==110):
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==GETNround): # is correct N of data
+                        state=111
+                    else:
+                        state=0
+
+                elif(state==111): # getString
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==42):  
+                        state=112   # check 126 for confirm end of text
+                    else:
+                        bytes_val = bytearray([int(Obj_uart.Buff[Obj_uart.indexpre.value])])
+                        TEMPstring=TEMPstring+str(bytes_val ,'utf-8')
+                        
+                        
+                    
+                elif(state==112): # check 126 for confirm end of string
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==126):
+                        if(GETNround==1):
+                            Ongrab[OntypeIndex]=TEMPstring
+                        else:
+                            Ongrab[OntypeIndex][PASSNround]=TEMPstring
+                        PASSNround=PASSNround+1
+                        if(PASSNround==GETNround):
+                            state=44 # check main continue or stop
+                        else:
+                            state=111 # Get moreString
+                    else:
+                        state=0
+                
+
+
+                elif(state==44): # main check continue or stop 
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==42):
+                        state=45
+                    elif(Obj_uart.Buff[Obj_uart.indexpre.value]==126):
+                        state=46
+                    else:
+                        state=0
+
+                elif(state==45): # confirm continue
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==42):
+                        # print(Ongrab)
+                        state=6
+                    else:
+                        state=0
+                elif(state==46): # confirm stop
+                    if(Obj_uart.Buff[Obj_uart.indexpre.value]==126):
+                        # print("GET IT ALL",Ongrab)
+                        state=426 # check crc
+                    else:
+                        state=0
+
+                elif(state==426):
+                    if(crcc.FlagCheck(int(Obj_uart.Buff[Obj_uart.indexpre.value]))):
+                        # print(crcc.result())
+                        Pn.pubbb(Ongrab,OnIdmsg)
+                        state=0
+                    else:
+                        state=0
+                
+
+
+
+
+                crcc.update(int(Obj_uart.indexpre.value))
+                Obj_uart.indexpre.value=(Obj_uart.indexpre.value+1)%1000
+            
+        except:
+            print("Protocol recovery.")
+
+
+class CRC8_Xicro():
+    def __init__(self):
+        self.lookup = [0x00,0x5E,0xBC,0xE2,0x61,0x3F,0xDD,0x83,0xC2,0x9C,0x7E,0x20,0xA3,0xFD,0x1F,0x41,0x9D,0xC3,0x21,0x7F,0xFC,0xA2,0x40,0x1E,0x5F,0x01,0xE3,0xBD,0x3E,0x60,0x82,0xDC,0x23,0x7D,0x9F,0xC1,0x42,0x1C,0xFE,0xA0,0xE1,0xBF,0x5D,0x03,0x80,0xDE,0x3C,0x62,0xBE,0xE0,0x02,0x5C,0xDF,0x81,0x63,0x3D,0x7C,0x22,0xC0,0x9E,0x1D,0x43,0xA1,0xFF,0x46,0x18,0xFA,0xA4,0x27,0x79,0x9B,0xC5,0x84,0xDA,0x38,0x66,0xE5,0xBB,0x59,0x07,0xDB,0x85,0x67,0x39,0xBA,0xE4,0x06,0x58,0x19,0x47,0xA5,0xFB,0x78,0x26,0xC4,0x9A,0x65,0x3B,0xD9,0x87,0x04,0x5A,0xB8,0xE6,0xA7,0xF9,0x1B,0x45,0xC6,0x98,0x7A,0x24,0xF8,0xA6,0x44,0x1A,0x99,0xC7,0x25,0x7B,0x3A,0x64,0x86,0xD8,0x5B,0x05,0xE7,0xB9,0x8C,0xD2,0x30,0x6E,0xED,0xB3,0x51,0x0F,0x4E,0x10,0xF2,0xAC,0x2F,0x71,0x93,0xCD,0x11,0x4F,0xAD,0xF3,0x70,0x2E,0xCC,0x92,0xD3,0x8D,0x6F,0x31,0xB2,0xEC,0x0E,0x50,0xAF,0xF1,0x13,0x4D,0xCE,0x90,0x72,0x2C,0x6D,0x33,0xD1,0x8F,0x0C,0x52,0xB0,0xEE,0x32,0x6C,0x8E,0xD0,0x53,0x0D,0xEF,0xB1,0xF0,0xAE,0x4C,0x12,0x91,0xCF,0x2D,0x73,0xCA,0x94,0x76,0x28,0xAB,0xF5,0x17,0x49,0x08,0x56,0xB4,0xEA,0x69,0x37,0xD5,0x8B,0x57,0x09,0xEB,0xB5,0x36,0x68,0x8A,0xD4,0x95,0xCB,0x29,0x77,0xF4,0xAA,0x48,0x16,0xE9,0xB7,0x55,0x0B,0x88,0xD6,0x34,0x6A,0x2B,0x75,0x97,0xC9,0x4A,0x14,0xF6,0xA8,0x74,0x2A,0xC8,0x96,0x15,0x4B,0xA9,0xF7,0xB6,0xE8,0x0A,0x54,0xD7,0x89,0x6B,0x35]
+        self.crc=0
+        self.buff=[]
+        self.index=0
+        self.buffersize=0
+    def resetCRC(self):
+        self.crc=0
+    def Add(self,buffer):
+        CRC=0
+        for i  in  range(0,len(buffer)):
+            CRC = self.lookup[CRC ^ buffer[i]]
+        buffer.append(CRC)
+        return  buffer
+    def CheckOne(self,crc,data):
+        crc = self.lookup[crc ^ data]
+        return crc
+    def CheckList(self,CRC,buffer):
+        for i  in  range(0,len(buffer)):
+            CRC = self.lookup[CRC ^ buffer[i]]
+        return  CRC
+    def begin(self,BUFFER):
+        self.buff=BUFFER
+    def startCom(self,index):
+        self.crc = 0
+        self.crc = self.lookup[self.crc ^ self.buff[index]]
+    def update(self,index):
+        self.crc = self.lookup[self.crc ^ int(self.buff[index])]
+    def result(self):
+        return self.crc
+    def FlagCheck(self,compairValue):
+        if(compairValue==self.crc):
+            return 1
+        else:
+            return 0
+
+    
+    
+# q=CRC8_Xicro()
+# w=[73]
+# q.begin(w)
+# q.startCom(0)
+# w.append(99)
+# q.update(1)
+# q.startCom(0)
+
+# print(q.CheckList([243, 2, 70, 111, 110, 95, 109, 97, 114, 107, 42, 126, 110, 97, 114, 97, 107, 95, 115, 115, 115, 42, 126]))
+
+   
+
+# while(1):
+#     1
+
+def Protocol_RosToXicro_spin(rclpy,Obj_uart): #processer 3
+    q=Subscriber_node(Obj_uart)
+    rclpy.spin(q)
+    # while(1):
+    #     # v2.value=v2.value+1
+    #     # print(v.value)
+    #     # q=[73,73]
+    #     # ser.ser.write(bytearray(q))
+    #     # print(Obj_uart.Buff[1:10])
+    #     1
+
+# get-+
+class Uart():
+    def __init__(self,mp):
+        self.Buff = mp.Array('d',np.zeros(1000))
+        self.index =  mp.Value('i',0)
+        self.indexpre =  mp.Value('i',0)
+
+
+        try:
+            self.port = sys.argv[1]
+        except:
+            self.port ="/dev/ttyACM0"
+            print("Input arg Port use")
+     
+        self.ser = self.check_port_open(self.port)
+
+        # self.count  =  mp.Value('i',0)
+        # self.count2  =  mp.Value('i',0)
+
+
+    def check_port_open(self,Port):
+        try:
+            ser = serial.Serial(Port, 115200, timeout=1000 ,stopbits=1)  
+            print(Port + ': port is Open.')
+        
+            return ser
+        except:
+            print(Port + ': open port Fail.')
+            
+        return 0
+def main():
+    rclpy.init()
+    try:
+
+
+        
+       
+        Obj_uart = Uart(mp)    # create Uart object
+
+        p = mp.Process(target=Receive_uart,args=(Obj_uart,))
+        p2 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,))
+        p3 = mp.Process(target=Protocol_RosToXicro_spin,args=(rclpy,Obj_uart,))
+        p.start()
+        p2.start()
+        p3.start()
+
+        # tp=time.time()
+        # s11=Obj_uart.count.value
+        # s22=Obj_uart.count2.value
+        while(1):
+            # if(time.time()-tp>=1):
+            #     tp=time.time()
+            #     print("T1= " , Obj_uart.count.value-s11)
+            #     print("T2= " , Obj_uart.count2.value-s22)
+            #     s11=Obj_uart.count.value
+            #     s22=Obj_uart.count2.value
+            1
+
+
+        # p.terminate()
+        # p2.terminate()
+    except KeyboardInterrupt:
+        p.terminate()
+        p2.terminate()
+        p3.terminate()   
+                 
+    finally:
+        rclpy.shutdown()
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
