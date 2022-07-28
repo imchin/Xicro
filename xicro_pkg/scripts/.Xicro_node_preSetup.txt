@@ -148,8 +148,8 @@ class Subscriber_node(Node):
         self.Obj_uart = Obj_uart
 
         
-        self.subscription = self.create_subscription(UInt64,'long',self.listener_callback,10)
-        self.subscription  # prevent unused variable warning
+        
+        
         self.CRC=0
         self.crcc=CRC8_Xicro()
         time.sleep(1)
@@ -399,8 +399,8 @@ class Subscriber_node(Node):
         self.Obj_uart.ser.write(bytearray(buff))
        
 
-    def listener_callback(self, msg):
-        print(msg)
+    
+    
 
     
        
