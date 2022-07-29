@@ -13,8 +13,8 @@ def gPath(q): # q=1 is install config q=0 is ws/ src pkg
         return w
 def interfacePath():
     w=os.popen("ros2 pkg prefix xicro_interfaces").read()
-    w=w[0:w.find("/install")]+"/src/xicro_interfaces"
-    return w
+    w=w[0:len(w)-1]
+    return w+'/share'+'/xicro_interfaces'
 def get_params(q):
     try:
         path = os.path.join(gPath(1), 'setup_xicro.yaml')
