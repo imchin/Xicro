@@ -31,7 +31,6 @@ install(PROGRAMS
 #xicro
   scripts/generate_arduino_lib.py
   scripts/generate_Xicro_node.py
-  scripts/xicro_node_Demo_ID_1.py
 #orcix
   DESTINATION lib/${PROJECT_NAME}
 )
