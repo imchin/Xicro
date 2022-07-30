@@ -24,7 +24,7 @@ def mkdir():
         path = get_params("path_arduino")
         ns= get_params("Namespace")
         id = get_params("Idmcu")
-        path=path+"/libraries/Xicro_"+ns+"_ID_"+str(id)
+        path=path+"/Xicro_"+ns+"_ID_"+str(id)
         path = os.path.join(os.path.expanduser('~'), path)
         os.mkdir(path)
         print("make folder Done path: "+path)
