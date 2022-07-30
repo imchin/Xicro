@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os
 import yaml
+
 def gPath(q): # q=1 is install config q=0 is ws/ src pkg
     if(q):
         w=os.popen("ros2 pkg prefix xicro_pkg").read()
