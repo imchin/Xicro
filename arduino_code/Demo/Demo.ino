@@ -31,10 +31,10 @@ void setup() {
 Serial.begin(115200);
 xicro.begin(&Serial);
 
-pinMode(A0,INPUT);
-pinMode(A1,INPUT);
-pinMode(A2,INPUT);
-pinMode(A3,INPUT);
+pinMode(A0,INPUT);  //poten
+pinMode(A1,INPUT);  //buttonS1
+pinMode(A2,INPUT);  //buttonS2
+pinMode(A3,INPUT);  //buttonS3
 
 
 
@@ -46,11 +46,12 @@ IMU.begin();
   TCB0.CTRLA = TCB_CLKSEL_CLKTCA_gc | TCB_ENABLE_bm;
 //end of set timer
 
-pinMode(3,OUTPUT);
-pinMode(10,OUTPUT);
-pinMode(11,OUTPUT);
-pinMode(12,OUTPUT);
-pinMode(13,OUTPUT);
+pinMode(3,OUTPUT);   //buzzer
+pinMode(10,OUTPUT);  //led
+pinMode(11,OUTPUT);  //led
+pinMode(12,OUTPUT);  //led
+pinMode(13,OUTPUT);  //led
+pinMode(5,OUTPUT);   //led
 myservo.attach(5); 
 
 }
@@ -60,6 +61,7 @@ void loop() {
 xicro.Spin_node();
 
 if(micros()-timestamp>=100000){
+  timestamp=micros();
   Buzzer();
   ser_vo();
   LED();
@@ -70,9 +72,9 @@ if(micros()-timestamp>=100000){
 
 void read_imu_Sendros2(){
   if(IMU.readAcceleration(gx, gy, gz) && IMU.readGyroscope(ax, ay, az)){
-      angular_velocity[0]=ax*(3.141592/180);
-      angular_velocity[1]=ay*(3.141592/180);
-      angular_velocity[2]=az*(3.141592/180);
+      angular_velocity[0]=ax*(3.141592/180.00);
+      angular_velocity[1]=ay*(3.141592/180.00);
+      angular_velocity[2]=az*(3.141592/180.0);
       linear_acceleration[0]=gx*(9.80665);
       linear_acceleration[1]=gy*(9.80665);
       linear_acceleration[2]=gz*(-9.80665);
@@ -105,7 +107,7 @@ void LED(){
 
 
 void ser_vo(){
-  myservo.write(((xicro.Sub_DemoOutput.servo/255.00)*180.00));
+  myservo.write(((xicro.Sub_DemoOutput.servo/255.00)*180.00)); 
 }
 
 

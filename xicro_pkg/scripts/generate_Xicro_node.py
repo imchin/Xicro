@@ -316,7 +316,7 @@ def gennerate():
             Idmsgg,nametopicc,interfacetopicc,dataTypee,dataNamee,datagrabb,NofDataa,datatypeProtocoll,bytetograbb=setup_var_protocol()
             fw.write("    return "+str(Idmsgg)+","+str(nametopicc)+","+str(interfacetopicc)+","+str(dataTypee)+","+str(dataNamee)+","+str(datagrabb)+","+str(NofDataa)+","+str(datatypeProtocoll)+","+str(bytetograbb))
             fw.write("\r\r")
-        elif(c==440):
+        elif(c==439):
             fw.write("    Idmcu = "+str(id_mcu))
         else:
             fw.write(line)
