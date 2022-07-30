@@ -9,7 +9,7 @@ def gPath(q): # q=1 is install config q=0 is ws/ src pkg
         return w+'/share'+'/xicro_pkg'+'/config'
     else:   
         w=os.popen("ros2 pkg prefix xicro_pkg").read()
-        w=w[0:w.find("/install")]+"/src/xicro_pkg"
+        w=w[0:w.find("/install")]+"/src/Xicro/xicro_pkg"
         return w
 def interfacePath():
     w=os.popen("ros2 pkg prefix xicro_interfaces").read()
