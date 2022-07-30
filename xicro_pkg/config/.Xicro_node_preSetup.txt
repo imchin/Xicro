@@ -472,7 +472,7 @@ def Protocol_XicroToRos_spin(Obj_uart): #processer 2
                         # print("Handshaking Complete.")
                         state=5
                     else:
-                        print("Fail handshake")
+                        # print("Fail handshake")
                         state=0
                 elif(state==5):   # On id msg xxx
                     for i in range (0,len(Idmsg)):

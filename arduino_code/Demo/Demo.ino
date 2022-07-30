@@ -51,7 +51,7 @@ pinMode(10,OUTPUT);  //led
 pinMode(11,OUTPUT);  //led
 pinMode(12,OUTPUT);  //led
 pinMode(13,OUTPUT);  //led
-pinMode(5,OUTPUT);   //led
+pinMode(5,OUTPUT);   //servo
 myservo.attach(5); 
 
 }
