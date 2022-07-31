@@ -477,7 +477,7 @@ def Protocol_XicroToRos_spin(Obj_uart): #processer 2
                 elif(state==5):   # On id msg xxx
                     for i in range (0,len(Idmsg)):
                         if(Obj_uart.Buff[Obj_uart.indexpre.value] == Idmsg[i]):
-                            # print(Idmsg)
+                            # print(Idmsg)F
                             # print(dataType)
                             # print(datagrab)
                             OnIdmsg=Idmsg[i]
@@ -796,7 +796,7 @@ class Uart():
 
     def check_port_open(self,Port):
         try:
-            ser = serial.Serial(Port, 115200, timeout=1000 ,stopbits=1)  
+            ser = serial.Serial(Port, 57600, timeout=1000 ,stopbits=1)  
             print(Port + ': port is Open.')
         
             return ser
