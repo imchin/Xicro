@@ -29,8 +29,10 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/gui_xicro.py
 #xicro
-  scripts/generate_arduino_lib.py
-  scripts/generate_Xicro_node.py
+  scripts/generate_library.py
+  scripts/generate_xicro_node.py
+  scripts/xicro_node_test_pub_ID_1_stm32.py
+  scripts/xicro_node_sub_N_pub_ID_1_stm32.py
 #orcix
   DESTINATION lib/${PROJECT_NAME}
 )

@@ -1,6 +1,7 @@
 Idmcu: 1
-Namespace: "Demo"
+Namespace: "sub_N_pub"
 Port: "/dev/ttyACM0"
-Setup_Publisher: [          [1,"Imu_arduino","Imu.msg"], [2,"DemoInput","DemoInput.msg"]    ]
-Setup_Subscriber: [         [40,"DemoOutput","DemoOutput.msg"]    ]
-path_arduino: "arduino"
+generate_library_Path: "arduino/libraries"
+Buadrate: 115200
+Setup_Publisher:  [         [1,"fake_Imu_Stm32","sensor_msgs/Imu.msg"]   ]
+Setup_Subscriber: [         [1,"fake_Imu","sensor_msgs/Imu.msg"]         ]

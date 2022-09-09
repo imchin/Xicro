@@ -1,0 +1,30 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/imchin/coXsys_ws/install/xxx_interfaces/include/**",
+        "/home/imchin/coXsys_ws/install/aruco/include/**",
+        "/home/imchin/colcon_ws/install/interfaces_tutorials/include/**",
+        "/home/imchin/mark_serial_ws/install/markserial_interfaces/include/**",
+        "/home/imchin/turtlebot3_ws/install/turtlebot3_gazebo/include/**",
+        "/home/imchin/turtlebot3_ws/install/turtlebot3_fake_node/include/**",
+        "/home/imchin/long_ws/install/long_interfaces/include/**",
+        "/home/imchin/Desktop/detection/install/interfaces/include/**",
+        "/home/imchin/aum_ws/install/aruco/include/**",
+        "/home/imchin/xicro_ws/install/xicro_interfaces/include/**",
+        "/opt/ros/foxy/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
