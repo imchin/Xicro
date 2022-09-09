@@ -2,6 +2,6 @@ Idmcu: 1
 Namespace: "sub_N_pub"
 Port: "/dev/ttyACM0"
 generate_library_Path: "arduino/libraries"
-Buadrate: 115200
+Baudrate: 115200
 Setup_Publisher:  [         [1,"fake_Imu_Stm32","sensor_msgs/Imu.msg"]   ]
 Setup_Subscriber: [         [1,"fake_Imu","sensor_msgs/Imu.msg"]         ]
