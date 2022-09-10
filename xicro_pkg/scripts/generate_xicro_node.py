@@ -242,8 +242,8 @@ def setup_var_protocol():
 # while(1):
 #     1
 
-def cal(buad_rate,byteGrab,Nofdata,NameToppic):
-    bytePerS=buad_rate/10.00
+def cal(baud_rate,byteGrab,Nofdata,NameToppic):
+    bytePerS=baud_rate/10.00
     Sumbyte=0
     for i in range(0,len(byteGrab)):
         byte_T= 4 + 1 + 1 # start + sign + id 
@@ -491,9 +491,9 @@ def gennerate():
             fw.write("#gen\r")
             genImport(fw)
         elif(c==799):
-            b=get_params("Buadrate")
+            b=get_params("Baudrate")
             f=0
-            fw.write("            ser = serial.Serial(Port,"+ str(get_params("Buadrate"))+", timeout=1000 ,stopbits=1)\n")    
+            fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
         else:
             fw.write(line)
     return 1
