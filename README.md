@@ -9,6 +9,7 @@ Using the same principle as rosserial, we come up with "xicro" (not to be confus
 ## General features of "xicro":
 * xicro auto-generates a library for a microcontroller (.h file)
 * xicro auto-generates a node that communicates with UART
+
 * xicro (should) supports all Arduino, ESP32, ESP8266 and STM32 families.
 
 "xicro" is a part of an ongoing project of CoXsys Robotics under GPL license. 
@@ -141,3 +142,5 @@ The node will be generated based on setup_xicro.yaml
 - check port open 
 
 - run xicro node
+
+
