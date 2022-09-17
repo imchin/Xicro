@@ -9,7 +9,6 @@ Using the same principle as rosserial, we come up with "xicro" (not to be confus
 ## General features of "xicro":
 * xicro auto-generates a library for a microcontroller (.h file)
 * xicro auto-generates a node that communicates with UART
-
 * xicro (should) supports all Arduino, ESP32, ESP8266 and STM32 families.
 
 "xicro" is a part of an ongoing project of CoXsys Robotics under GPL license. 
@@ -20,17 +19,23 @@ Using the same principle as rosserial, we come up with "xicro" (not to be confus
 ## Installation
 #### Xicro requires metapackage
 
-xxx_ws is your workspace
-```bash
-  cd ~/xxx_ws/src      #cd to your workspace
-  mkdir Xicro          #create metapackage
-  cd Xicro             #cd to metapackage
-  git clone https://github.com/imchin/Xicro .
-  cd ~/xxx_ws
-  colcon build
-  source ~/xxx_ws/install/setup.bash
-```
-
+  - ### install metapackage
+    xxx_ws is your workspace
+  ```bash
+    cd ~/xxx_ws/src      #cd to your workspace
+    mkdir Xicro          #create metapackage
+    cd Xicro             #cd to metapackage
+    git clone https://github.com/imchin/Xicro .
+    cd ~/xxx_ws
+    colcon build
+    source ~/xxx_ws/install/setup.bash
+  ```
+  - ### install python library
+    ```bash
+    pip3 uninstall serial
+    pip3 install pyserial
+    pip3 install numpy
+    ```
 
 ## Setup parameter in yaml
     cd ~/xxx_ws/src/Xicro/xicro_pkg/config      
@@ -143,4 +148,4 @@ The node will be generated based on setup_xicro.yaml
 
 - run xicro node
 
-
+# Now STM32 support Only STM32F411RE
