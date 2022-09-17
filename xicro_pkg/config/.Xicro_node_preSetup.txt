@@ -1,6 +1,6 @@
 
 
-
+!Delete this line to verify the code.
 
 import math
 import rclpy
@@ -73,11 +73,10 @@ def typetoProtocol(typee,Nofdata):
 
 
 
-
-
 def create_N_topic(self,name,interfaces):
     try:
         for i in range (0,len(interfaces)):
+            interfaces[i]=interfaces[i].split("/")[1]
             msg= interfaces[i][0:len(interfaces[i])-4]
             interfaces[i] = self.create_publisher(globals()[msg] , name[i], 10)
             print('Open Topic Name : '+name[i] +"  >>>>  Use msg name : "+ msg)
@@ -100,7 +99,7 @@ def bufferToType(BUFFER,Typee):
         
     elif(Typee=="float64"):
         bytes_val = bytearray(BUFFER)
-        return struct.unpack('>d', bytes_val)[0]
+        return struct.unpack('<d', bytes_val)[0]
 
 
 
@@ -123,8 +122,8 @@ class Publisher_node(Node):
             if(self.Idmsg[i]==OnIdmsg):
                 index=i
 
-        msg= self.interfaceTopic[index][0:len(self.interfaceTopic[index])-4]
-        msg=globals()[msg]()
+        msg= self.interfaceTopic[index].split("/")[1][0:len(self.interfaceTopic[index])-4]
+        msg=globals()[msg.split(".")[0]]()
         # print(msg)
         # print(self.dataName[index])
         # print(self.Nofdata[index])
@@ -253,31 +252,31 @@ class Subscriber_node(Node):
 
     def _SendInt8(self,data,len):
         if(len>1):
-            buff=[9]
+            buff=[19]
             buff.append(len)
             for i in range(0,len):
                 buff.append(data[i]&0xff)
         else:
-            buff=[8,0]
+            buff=[18,0]
             buff[1]=data&0xff
         self.CRC=self.crcc.CheckList(self.CRC,buff)
         self.Obj_uart.ser.write(bytearray(buff))
     def _SendInt16(self,data,len):
         if(len>1):
-            buff=[17]
+            buff=[117]
             buff.append(len)
             for i in range(0,len):
                 buff.append(data[i] >> 8 & 0xFF)
                 buff.append(data[i] >> 0 & 0xFF)
         else:
-            buff=[16]
+            buff=[116]
             buff.append(data >> 8 & 0xFF)
             buff.append(data >> 0 & 0xFF)
         self.CRC=self.crcc.CheckList(self.CRC,buff)
         self.Obj_uart.ser.write(bytearray(buff))
     def _SendInt32(self,data,len):
         if(len>1):
-            buff=[33]
+            buff=[133]
             buff.append(len)
             for i in range(0,len):
                 buff.append(data[i] >> 24 & 0xFF)
@@ -285,7 +284,7 @@ class Subscriber_node(Node):
                 buff.append(data[i] >>  8 & 0xFF)
                 buff.append(data[i] >>  0 & 0xFF)
         else:
-            buff=[32]
+            buff=[132]
             buff.append(data >> 24 & 0xFF)
             buff.append(data >> 16 & 0xFF)
             buff.append(data >>  8 & 0xFF)
@@ -294,7 +293,7 @@ class Subscriber_node(Node):
         self.Obj_uart.ser.write(bytearray(buff))
     def _SendInt64(self,data,len):
         if(len>1):
-            buff=[65]
+            buff=[165]
             buff.append(len)
             for i in range(0,len):
                 buff.append(data[i] >> 56 & 0xFF)
@@ -307,7 +306,7 @@ class Subscriber_node(Node):
                 buff.append(data[i] >>  0 & 0xFF)
             
         else:
-            buff=[64]
+            buff=[164]
             buff.append(data >> 56 & 0xFF)
             buff.append(data >> 48 & 0xFF)
             buff.append(data >> 40 & 0xFF)
@@ -784,9 +783,10 @@ class Uart():
 
         try:
             self.port = sys.argv[1]
+            print("Input new arg  is :"+self.port)
         except:
             self.port ="/dev/ttyACM0"
-            print("Input arg Port use")
+            print("Input arg Port use is :"+self.port)
      
         self.ser = self.check_port_open(self.port)
 

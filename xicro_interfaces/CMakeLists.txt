@@ -56,6 +56,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Twist.msg"
   "msg/DemoInput.msg"
   "msg/DemoOutput.msg"  
+  "msg/Vector3.msg"
+  "msg/Time.msg"
+  "msg/Header.msg"
+
+  
 )
 
 ament_package()

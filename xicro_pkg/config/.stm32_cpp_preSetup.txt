@@ -1,9 +1,9 @@
 
 Xicro::Xicro(){
 }
-void Xicro::begin(Stream *SerialObject){
+void Xicro::begin(UART_HandleTypeDef* SerialObject){
     _serial=SerialObject;
-   
+    HAL_UART_Receive_DMA(_serial, _UartBuff, 64);
 
   
   
@@ -23,36 +23,36 @@ uint8_t Xicro::_getcrc(uint8_t crc,uint8_t *data,uint16_t len){
 }
 
 void Xicro::_Sendstart(){
-    _serial->write(_start,4);
+    HAL_UART_Transmit(_serial, _start, 4, 10000);
 }
 void Xicro::_Sendstop(){
     _crc=_getcrc(_crc,_stop,2);
-    _serial->write(_stop,2);
+    HAL_UART_Transmit(_serial, _stop, 2, 1000);
 }
 void Xicro::_Sendcontinue(){
     _crc=_getcrc(_crc,_continue,2);
-    _serial->write(_continue,2);
+    HAL_UART_Transmit(_serial, _continue, 2, 1000);
 }
 void Xicro::_SendSignature(uint8_t Idmcu,uint8_t Mode){
    uint8_t q[1]={0};
    q[0]=Idmcu<<4;
    q[0]=q[0]|Mode;
    _crc=_getcrc(_crc, &q[0],1);
-   _serial->write(q,1);
+   HAL_UART_Transmit(_serial, q, 1, 1000);
 }
 void Xicro::_SendUint8(uint8_t *data,uint8_t len){
     if(len>1){
         uint8_t buff[2]={9,0};
         buff[1]=len & 0xFF;
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         _crc=_getcrc(_crc,buff,2);
         _crc=_getcrc(_crc,data,len);
-        _serial->write(data,len);
+        HAL_UART_Transmit(_serial, data, len, 1000);
     }else{
         uint8_t buff[2]={8,0};
         buff[1]=(uint8_t)*data & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
     }
     
 
@@ -63,7 +63,7 @@ void Xicro::_SendUint16(uint16_t *data,uint8_t len){
         uint8_t buff[2]={17,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*2)+1] = (uint16_t)data[i] >> 0 & 0xFF;
@@ -71,14 +71,14 @@ void Xicro::_SendUint16(uint16_t *data,uint8_t len){
             
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        HAL_UART_Transmit(_serial, sp, sizee, 1000);
 
     }else{
         uint8_t buff[3]={16,0,0};
         buff[2] = (uint16_t)*data >> 0 & 0xFF;
         buff[1] = (uint16_t)*data >> 8 & 0xFF;
         _crc=_getcrc(_crc,buff,3);
-        _serial->write(buff,3);
+        HAL_UART_Transmit(_serial, buff, 3, 1000);
     }
     
 }
@@ -89,7 +89,7 @@ void Xicro::_SendUint32(uint32_t *data,uint8_t len){
         uint8_t buff[2]={33,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*4)+3] = (uint32_t)data[i] >> 0 & 0xFF;
@@ -98,7 +98,7 @@ void Xicro::_SendUint32(uint32_t *data,uint8_t len){
             sp[(i*4)]   = (uint32_t)data[i] >> 24 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        HAL_UART_Transmit(_serial, sp, sizee, 1000);
 
     }else{
         uint8_t buff[5]={32,0,0,0,0};
@@ -107,7 +107,7 @@ void Xicro::_SendUint32(uint32_t *data,uint8_t len){
         buff[2] = (uint32_t)*data >> 16 & 0xFF;
         buff[1] = (uint32_t)*data >> 24 & 0xFF;
         _crc=_getcrc(_crc,buff,5);
-        _serial->write(buff,5);
+        HAL_UART_Transmit(_serial, buff, 5, 1000);
         
     }
 }
@@ -117,7 +117,7 @@ void Xicro::_SendUint64(uint64_t *data,uint8_t len){
         uint8_t buff[2]={65,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*8)+7] = (uint64_t)data[i] >> 0  & 0xFF;
@@ -130,7 +130,7 @@ void Xicro::_SendUint64(uint64_t *data,uint8_t len){
             sp[(i*8)]   = (uint64_t)data[i] >> 56 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        HAL_UART_Transmit(_serial, sp, sizee, 1000);
 
     }else{
         uint8_t buff[9]={64,0,0,0,0,0,0,0,0};
@@ -143,7 +143,7 @@ void Xicro::_SendUint64(uint64_t *data,uint8_t len){
         buff[2] = (uint64_t)*data >> 48 & 0xFF;
         buff[1] = (uint64_t)*data >> 56 & 0xFF;
         _crc=_getcrc(_crc,buff,9);
-        _serial->write(buff,9);
+        HAL_UART_Transmit(_serial, buff, 9, 1000);
         
     }
 }
@@ -151,15 +151,15 @@ void Xicro::_SendInt8(int8_t *data,uint8_t len){
     if(len>1){
         uint8_t buff[2]={19,0};
         buff[1]=len & 0xFF;
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         _crc=_getcrc(_crc,buff,2);       
         _crc=_getcrc(_crc,(uint8_t*)data,len);
-        _serial->write((uint8_t*)data,len);
+        HAL_UART_Transmit(_serial, (uint8_t*)data, len, 1000);
     }else{
         uint8_t buff[2]={18,0};
-        buff[1]=(uint8_t)*data & 0xFF;
+        buff[1]=(int8_t)*data & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
     }
 }
 void Xicro::_SendInt16(int16_t *data,uint8_t len){
@@ -168,22 +168,22 @@ void Xicro::_SendInt16(int16_t *data,uint8_t len){
         uint8_t buff[2]={117,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
-            sp[(i*2)+1] = (uint16_t)data[i] >> 0 & 0xFF;
-            sp[(i*2)]   = (uint16_t)data[i] >> 8 & 0xFF;
+            sp[(i*2)+1] = (int16_t)data[i] >> 0 & 0xFF;
+            sp[(i*2)]   = (int16_t)data[i] >> 8 & 0xFF;
             
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        HAL_UART_Transmit(_serial, sp, sizee, 1000);
 
     }else{
         uint8_t buff[3]={116,0,0};
-        buff[2] = (uint16_t)*data >> 0 & 0xFF;
-        buff[1] = (uint16_t)*data >> 8 & 0xFF;
+        buff[2] = (int16_t)*data >> 0 & 0xFF;
+        buff[1] = (int16_t)*data >> 8 & 0xFF;
         _crc=_getcrc(_crc,buff,3);
-        _serial->write(buff,3);
+        HAL_UART_Transmit(_serial, buff, 3, 1000);
     }
 }
 void Xicro::_SendInt32(int32_t *data,uint8_t len){
@@ -192,25 +192,25 @@ void Xicro::_SendInt32(int32_t *data,uint8_t len){
         uint8_t buff[2]={133,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
-            sp[(i*4)+3] = (uint32_t)data[i] >> 0 & 0xFF;
-            sp[(i*4)+2] = (uint32_t)data[i] >> 8 & 0xFF;
-            sp[(i*4)+1] = (uint32_t)data[i] >> 16 & 0xFF;
-            sp[(i*4)]   = (uint32_t)data[i] >> 24 & 0xFF;     
+            sp[(i*4)+3] = (int32_t)data[i] >> 0 & 0xFF;
+            sp[(i*4)+2] = (int32_t)data[i] >> 8 & 0xFF;
+            sp[(i*4)+1] = (int32_t)data[i] >> 16 & 0xFF;
+            sp[(i*4)]   = (int32_t)data[i] >> 24 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        HAL_UART_Transmit(_serial, sp, sizee, 1000);
 
     }else{
         uint8_t buff[5]={132,0,0,0,0};
-        buff[4] = (uint32_t)*data >> 0 & 0xFF;
-        buff[3] = (uint32_t)*data >> 8 & 0xFF;
-        buff[2] = (uint32_t)*data >> 16 & 0xFF;
-        buff[1] = (uint32_t)*data >> 24 & 0xFF;
+        buff[4] = (int32_t)*data >> 0 & 0xFF;
+        buff[3] = (int32_t)*data >> 8 & 0xFF;
+        buff[2] = (int32_t)*data >> 16 & 0xFF;
+        buff[1] = (int32_t)*data >> 24 & 0xFF;
         _crc=_getcrc(_crc,buff,5);
-        _serial->write(buff,5);
+        HAL_UART_Transmit(_serial, buff, 5, 1000);
     }
 }
 void Xicro::_SendInt64(int64_t *data,uint8_t len){
@@ -219,33 +219,33 @@ void Xicro::_SendInt64(int64_t *data,uint8_t len){
         uint8_t buff[2]={65,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
-            sp[(i*8)+7] = (uint64_t)data[i] >> 0  & 0xFF;
-            sp[(i*8)+6] = (uint64_t)data[i] >> 8  & 0xFF;
-            sp[(i*8)+5] = (uint64_t)data[i] >> 16 & 0xFF;
-            sp[(i*8)+4] = (uint64_t)data[i] >> 24 & 0xFF;  
-            sp[(i*8)+3] = (uint64_t)data[i] >> 32 & 0xFF;
-            sp[(i*8)+2] = (uint64_t)data[i] >> 40 & 0xFF;
-            sp[(i*8)+1] = (uint64_t)data[i] >> 48 & 0xFF;
-            sp[(i*8)]   = (uint64_t)data[i] >> 56 & 0xFF;     
+            sp[(i*8)+7] = (int64_t)data[i] >> 0  & 0xFF;
+            sp[(i*8)+6] = (int64_t)data[i] >> 8  & 0xFF;
+            sp[(i*8)+5] = (int64_t)data[i] >> 16 & 0xFF;
+            sp[(i*8)+4] = (int64_t)data[i] >> 24 & 0xFF;  
+            sp[(i*8)+3] = (int64_t)data[i] >> 32 & 0xFF;
+            sp[(i*8)+2] = (int64_t)data[i] >> 40 & 0xFF;
+            sp[(i*8)+1] = (int64_t)data[i] >> 48 & 0xFF;
+            sp[(i*8)]   = (int64_t)data[i] >> 56 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        HAL_UART_Transmit(_serial, sp, sizee, 1000);
 
     }else{
         uint8_t buff[9]={64,0,0,0,0,0,0,0,0};
-        buff[8] = (uint64_t)*data >> 0  & 0xFF;
-        buff[7] = (uint64_t)*data >> 8  & 0xFF;
-        buff[6] = (uint64_t)*data >> 16 & 0xFF;
-        buff[5] = (uint64_t)*data >> 24 & 0xFF;
-        buff[4] = (uint64_t)*data >> 32 & 0xFF;
-        buff[3] = (uint64_t)*data >> 40 & 0xFF;
-        buff[2] = (uint64_t)*data >> 48 & 0xFF;
-        buff[1] = (uint64_t)*data >> 56 & 0xFF;
+        buff[8] = (int64_t)*data >> 0  & 0xFF;
+        buff[7] = (int64_t)*data >> 8  & 0xFF;
+        buff[6] = (int64_t)*data >> 16 & 0xFF;
+        buff[5] = (int64_t)*data >> 24 & 0xFF;
+        buff[4] = (int64_t)*data >> 32 & 0xFF;
+        buff[3] = (int64_t)*data >> 40 & 0xFF;
+        buff[2] = (int64_t)*data >> 48 & 0xFF;
+        buff[1] = (int64_t)*data >> 56 & 0xFF;
         _crc=_getcrc(_crc,buff,9);
-        _serial->write(buff,9);
+        HAL_UART_Transmit(_serial, buff, 9, 1000);
         
     }
 }
@@ -254,35 +254,57 @@ void Xicro::_SendFloat32(float *data,uint8_t len){
         uint8_t buff[2]={112,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
         for(int i=0;i<len;i++){
-            byte * bb = (byte *) &data[i];
+            uint8_t * bb = (uint8_t *) &data[i];
             _crc=_getcrc(_crc,bb,4);
-            _serial->write(bb,4);
+            HAL_UART_Transmit(_serial, bb, 4, 1000);
         }
 
     }else{
-        byte * bb = (byte *) &*data;
+        uint8_t * bb = (uint8_t *) &*data;
         uint8_t buff[1]={111};
         _crc=_getcrc(_crc,&buff[0],1);
         _crc=_getcrc(_crc,bb,4);
-        _serial->write(buff,1);
-        _serial->write(bb,4);
+        HAL_UART_Transmit(_serial, buff, 1, 1000);
+        HAL_UART_Transmit(_serial, bb, 4, 1000);
     }
     
 }
-void Xicro::_SendString(String *data,uint8_t len){
+void Xicro::_SendDouble(double *data,uint8_t len){
+    if(len>1){
+        uint8_t buff[2]={223,0};
+        buff[1]=len & 0xFF;
+        _crc=_getcrc(_crc,buff,2);
+        HAL_UART_Transmit(_serial, buff, 2, 1000);
+        for(int i=0;i<len;i++){
+            uint8_t * bb = (uint8_t *) &data[i];
+            _crc=_getcrc(_crc,bb,8);
+            HAL_UART_Transmit(_serial, bb, 8, 1000);
+        }
+
+    }else{
+        uint8_t * bb = (uint8_t *) &*data;
+        uint8_t buff[1]={222};
+        _crc=_getcrc(_crc,&buff[0],1);
+        _crc=_getcrc(_crc,bb,8);
+        HAL_UART_Transmit(_serial, buff, 1, 1000);
+        HAL_UART_Transmit(_serial, bb, 8, 1000);
+    }
+    
+}
+void Xicro::_SendString(std::string *data,uint8_t len){
     uint8_t buffE[2]={42,126};
     if(len>1){
         uint8_t buffS[2]={243,0};
         buffS[1]=len & 0xFF;
         _crc=_getcrc(_crc,buffS,2);
-        _serial->write(buffS,2);
+        HAL_UART_Transmit(_serial, buffS, 2, 1000);
         for(int j=0;j<len;j++){
             _crc=_getcrc(_crc,(uint8_t*)&data[j][0],data[j].length());
             _crc=_getcrc(_crc,buffE,2);
-            _serial->write((uint8_t*)&data[j][0],data[j].length());
-            _serial->write(buffE,2);
+            HAL_UART_Transmit(_serial, (uint8_t*)&data[j][0], data[j].length(), 1000);
+            HAL_UART_Transmit(_serial, buffE, 2, 1000);
         }
 
     }else{
@@ -290,9 +312,9 @@ void Xicro::_SendString(String *data,uint8_t len){
         _crc=_getcrc(_crc,&buffS[0],1);
         _crc=_getcrc(_crc,(uint8_t*)&data[0][0],data[0].length());
         _crc=_getcrc(_crc,buffE,2);
-        _serial->write(buffS,1);
-        _serial->write((uint8_t*)&data[0][0],data[0].length());
-        _serial->write(buffE,2);
+        HAL_UART_Transmit(_serial, buffS, 1, 1000);
+        HAL_UART_Transmit(_serial, (uint8_t*)&data[0][0], data[0].length(), 1000);
+        HAL_UART_Transmit(_serial, buffE, 2, 1000);
     }
     
 
@@ -322,7 +344,7 @@ void Xicro::_SendBool(bool *data,uint8_t len,bool flagNext){ //flagnext=1=contin
             
         }
         _crc=_getcrc(_crc,buff,sizee);
-        _serial->write(buff,sizee);
+        HAL_UART_Transmit(_serial, buff, sizee, 1000);
 
     }else{
         uint8_t buff[3]={88,0,0};
@@ -344,15 +366,15 @@ void Xicro::_SendBool(bool *data,uint8_t len,bool flagNext){ //flagnext=1=contin
             }
         }
         _crc=_getcrc(_crc,buff,3);
-        _serial->write(buff,3);
+        HAL_UART_Transmit(_serial, buff, 3, 1000);
     }
 }
 void Xicro::_Sendcrc(){
-    _serial->write(_crc);
+    HAL_UART_Transmit(_serial, &_crc, 1, 1000);
 }
 void Xicro::_SendIdTopic(uint8_t IdTopic){
     _crc=_getcrc(_crc,&IdTopic,1);
-    _serial->write(IdTopic);
+    HAL_UART_Transmit(_serial, &IdTopic, 1, 1000);
 }
 void Xicro::Test(){
     
@@ -374,24 +396,11 @@ void Xicro::Test(){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //get
 void Xicro::Spin_node(){
-    if(_serial->available() > 0){
-        _serial->readBytes(_datain,1);
+    _Posdata=((UART_HandleTypeDef)*_serial).RxXferSize-((UART_HandleTypeDef)*_serial).hdmarx->Instance->NDTR;
+    if(_Posdata!=_Posdatapre ){
+        _datain[0] = _UartBuff[_Posdatapre];
         // _serial->write(_datain,1);
         
         switch (_state){
@@ -438,7 +447,7 @@ void Xicro::Spin_node(){
                 }
                 break;
             case 5:
-                for (int i=0;i<sizeof(_Idtopic_sub);i++){
+                for (uint i=0;i<sizeof(_Idtopic_sub);i++){
                     if(_Idtopic_sub[i]== _datain[0]){
                         _Indexdata=255;
                         _OnTopic=i;
@@ -469,7 +478,7 @@ void Xicro::Spin_node(){
                     }else if(_datain[0]==16 ||_datain[0]== 116){
                         _loop=0;
                         _loopTo=2;
-                        _Indexdata=_Indexdata+1;
+                        _Indexdata=_Indexdata+1;_Posdatapre=(_Posdatapre+1)%32;
                         _Ontype=_datain[0];
                         _OngrabTo=_Nofdata[_OnTopic][_Indexdata];
                         _Ongrab=0;
@@ -506,9 +515,7 @@ void Xicro::Spin_node(){
                         _Ongrab=0;
                         _bb=0;
                         _statetogo=11;
-                        _state=9;  // verity N grab
-
-                    }else if(_datain[0]==64||_datain[0]== 164){
+                        _state=9;  // verity N grab_Posdatapre=(_Posdatapre+1)%32;){
                         _loop=0;
                         _loopTo=8;
                         _Indexdata=_Indexdata+1;
@@ -547,6 +554,26 @@ void Xicro::Spin_node(){
                         _statetogo=11;
                         _state=9; // verity N grab
                     
+                    }else if(_datain[0]==222){
+                        _loop=0;
+                        _loopTo=8;
+                        _Indexdata=_Indexdata+1;
+                        _Ontype=_datain[0];
+                        _OngrabTo=_Nofdata[_OnTopic][_Indexdata];
+                        _Ongrab=0;
+                        _bb=0;
+                        _state=11;  //get N byte
+                    }else if(_datain[0]==223){
+                        _loop=0;
+                        _loopTo=8;
+                        _Indexdata=_Indexdata+1;
+                        _Ontype=_datain[0];
+                        _bb=0;
+                        _OngrabTo=_Nofdata[_OnTopic][_Indexdata];
+                        _Ongrab=0;
+                        _statetogo=11;
+                        _state=9; // verity N grab
+                    
                     }else if(_datain[0]==242 ){
                         _Indexdata=_Indexdata+1;
                         _OngrabTo=_Nofdata[_OnTopic][_Indexdata];
@@ -561,7 +588,7 @@ void Xicro::Spin_node(){
                         _Ongrab=0;
                         _bufff="";
                         _statetogo=99;
-                        _state=9; // vreity N grab
+                        _state=9; // vreity N grab_Posdatapre=(_Posdatapre+1)%32;
                     }else if(_datain[0]==88){
                         _Indexdata=_Indexdata+1;
                         _bb=0;
@@ -573,11 +600,10 @@ void Xicro::Spin_node(){
                         _Ontype=_datain[0];
                         _OngrabTo=_Nofdata[_OnTopic][_Indexdata];
                         _Ongrab=0;
-                        _state=60;  // Check N bool 
-                    }
+                        _state=60;  // Check N bool _Posdatapre=(_Posdatapre+1)%32;
                     
                     
-                    else if(_datain[0]==126){
+                    }else if(_datain[0]==126){
                         _state=90;
                     }
                     else{
@@ -594,10 +620,8 @@ void Xicro::Spin_node(){
                     _state=61;
                 }else{
                     _state=0;
-                }
-                break;
-            case 61:
-                for(int i=0;i<(8);i++){
+                }_Posdatapre=(_Posdatapre+1)%32;
+                for(uint i=0;i<(8);i++){
                     if(i+ (_Ongrab*8)<_OngrabTo){
                         *(bool*)_nonverify[_OnTopic][_Indexdata][i+ (_Ongrab*8)] = (bool)(((uint8_t)_datain[0] >>i)&0x01);
                     }
@@ -674,7 +698,7 @@ void Xicro::Spin_node(){
             case 10: //uint8 and  int 8 
                 if(_Ontype==8 || _Ontype==9){
                     *(uint8_t*)_nonverify[_OnTopic][_Indexdata][_Ongrab] = (uint8_t)_datain[0];
-                }else if(_Ontype=18 || _Ontype==19){
+                }else if(_Ontype==18 || _Ontype==19){
                     *(int8_t*)_nonverify[_OnTopic][_Indexdata][_Ongrab] = (int8_t)_datain[0];
                 }
 
@@ -715,6 +739,18 @@ void Xicro::Spin_node(){
                     bu[2] = (_bb >> 16) & 0xFF;
                     bu[3] = (_bb >> 24) & 0xFF;
                     memcpy (_nonverify[_OnTopic][_Indexdata][_Ongrab], bu, 4);
+                    _state=222;
+                }else if((_Ontype==222 || _Ontype==223 ) && _loop==_loopTo){
+                    uint8_t bu[8];
+                    bu[0] = (_bb >> 0)  & 0xFF;
+                    bu[1] = (_bb >> 8)  & 0xFF;
+                    bu[2] = (_bb >> 16) & 0xFF;
+                    bu[3] = (_bb >> 24) & 0xFF;
+                    bu[4] = (_bb >> 32)  & 0xFF;
+                    bu[5] = (_bb >> 40)  & 0xFF;
+                    bu[6] = (_bb >> 48) & 0xFF;
+                    bu[7] = (_bb >> 56) & 0xFF;
+                    memcpy (_nonverify[_OnTopic][_Indexdata][_Ongrab], bu, 8);
                     _state=222;
                 }
 
@@ -764,7 +800,9 @@ void Xicro::Spin_node(){
                             }else if (_TopicType[_OnTopic][i]== 111 || _TopicType[_OnTopic][i]== 112){
                                 *(float*)_verify[_OnTopic][i][k]=*(float*)_nonverify[_OnTopic][i][k];
                             }else if (_TopicType[_OnTopic][i]== 242 || _TopicType[_OnTopic][i]== 243){
-                                *(String*)_verify[_OnTopic][i][k]=*(String*)_nonverify[_OnTopic][i][k];
+                                *(std::string*)_verify[_OnTopic][i][k]=*(std::string*)_nonverify[_OnTopic][i][k];
+                            }else if (_TopicType[_OnTopic][i]== 222 || _TopicType[_OnTopic][i]== 223){
+                                *(double*)_verify[_OnTopic][i][k]=*(double*)_nonverify[_OnTopic][i][k];
                             }
 
 
@@ -787,7 +825,7 @@ void Xicro::Spin_node(){
                 break;
             case 100:
                 if(_datain[0]==126){
-                    *(String*)_nonverify[_OnTopic][_Indexdata][_Ongrab] =   (String)_bufff;
+                    *(std::string*)_nonverify[_OnTopic][_Indexdata][_Ongrab] =   (std::string)_bufff;
                     _Ongrab=_Ongrab+1;
                     if(_Ongrab==_OngrabTo){
                         _state=222; // check main continue or stop
@@ -827,6 +865,7 @@ void Xicro::Spin_node(){
                 break;
         }
         _crcIn=_getcrc(_crcIn,&_datain[0],1); 
+        _Posdatapre=(_Posdatapre+1)%64;
         // uint8_t tyu[3]={199,199,202};
         // tyu[1]=_state;
         // _serial->write(_crcIn);
