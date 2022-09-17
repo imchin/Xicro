@@ -144,8 +144,10 @@ The node will be generated based on setup_xicro.yaml
 
 - Connect MCU to computer
 
-- check port open 
-
+- check permission port open 
+  ```bash
+  chown $USERNAME /port     #Changing permissions port 
+  ```
 - run xicro node
 
 # Now STM32 support Only STM32F411RE
