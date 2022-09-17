@@ -491,8 +491,6 @@ def gennerate():
             fw.write("#gen\r")
             genImport(fw)
         elif(c==799):
-            b=get_params("Baudrate")
-            f=0
             fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
         else:
             fw.write(line)

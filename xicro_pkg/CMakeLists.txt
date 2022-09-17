@@ -31,8 +31,7 @@ install(PROGRAMS
 #xicro
   scripts/generate_library.py
   scripts/generate_xicro_node.py
-  scripts/xicro_node_test_pub_ID_1_stm32.py
-  scripts/xicro_node_sub_N_pub_ID_1_stm32.py
+  scripts/fake_Imu_node.py
 #orcix
   DESTINATION lib/${PROJECT_NAME}
 )

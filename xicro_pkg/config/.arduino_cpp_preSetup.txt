@@ -16,7 +16,7 @@ uint8_t Xicro::_getcrc(uint8_t crc,uint8_t *data,uint16_t len){
         crc = _CRC_8_TABLE[crc ^ data[i]];
         }
     }else{
-        crc = _CRC_8_TABLE[crc ^ (uint8_t)data];
+        crc = _CRC_8_TABLE[crc ^ (uint8_t)*data];
     }
     
     return crc;
@@ -37,7 +37,7 @@ void Xicro::_SendSignature(uint8_t Idmcu,uint8_t Mode){
    uint8_t q[1]={0};
    q[0]=Idmcu<<4;
    q[0]=q[0]|Mode;
-   _crc=_getcrc(_crc, (uint8_t*)q[0],1);
+   _crc=_getcrc(_crc, &q[0],1);
    _serial->write(q,1);
 }
 void Xicro::_SendUint8(uint8_t *data,uint8_t len){
@@ -264,7 +264,7 @@ void Xicro::_SendFloat32(float *data,uint8_t len){
     }else{
         byte * bb = (byte *) &*data;
         uint8_t buff[1]={111};
-        _crc=_getcrc(_crc,(uint8_t*)buff[0],1);
+        _crc=_getcrc(_crc,&buff[0],1);
         _crc=_getcrc(_crc,bb,4);
         _serial->write(buff,1);
         _serial->write(bb,4);
@@ -287,7 +287,7 @@ void Xicro::_SendString(String *data,uint8_t len){
 
     }else{
         uint8_t buffS[1]={242};
-        _crc=_getcrc(_crc,(uint8_t*)buffS[0],1);
+        _crc=_getcrc(_crc,&buffS[0],1);
         _crc=_getcrc(_crc,(uint8_t*)&data[0][0],data[0].length());
         _crc=_getcrc(_crc,buffE,2);
         _serial->write(buffS,1);
@@ -351,7 +351,7 @@ void Xicro::_Sendcrc(){
     _serial->write(_crc);
 }
 void Xicro::_SendIdTopic(uint8_t IdTopic){
-    _crc=_getcrc(_crc,(uint8_t*)IdTopic,1);
+    _crc=_getcrc(_crc,&IdTopic,1);
     _serial->write(IdTopic);
 }
 void Xicro::Test(){
@@ -826,7 +826,7 @@ void Xicro::Spin_node(){
                 }
                 break;
         }
-        _crcIn=_getcrc(_crcIn,(uint8_t*)_datain[0],1); 
+        _crcIn=_getcrc(_crcIn,&_datain[0],1); 
         // uint8_t tyu[3]={199,199,202};
         // tyu[1]=_state;
         // _serial->write(_crcIn);

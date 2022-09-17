@@ -17,23 +17,24 @@ class MinimalPublisher(Node):
     def timer_callback(self):
         msg = Imu()
         msg.header.frame_id="fake_Imu"
-
+        msg.header.stamp.nanosec=self.i
         msg.angular_velocity.x=3.14
         msg.angular_velocity.y=-3.14
         msg.angular_velocity.z=3.14
 
         msg.orientation.x=3.264
-        msg.orientation.y=42.14
-        msg.orientation.z=26.14
+        msg.orientation.y=42.26
+        msg.orientation.z=26.42
         msg.orientation.w=3.14
+
+
         msg.angular_velocity_covariance=[1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0]
+        msg.orientation_covariance=[1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0]
 
-        msg.header.stamp.nanosec=133
-        # msg=Float32()
-        # msg.data=0.2642+self.i
-
+        
         self.publisher_.publish(msg)
-        self.i += 1
+        self.i=(self.i+1)%10000
+            
 
 
 def main(args=None):
