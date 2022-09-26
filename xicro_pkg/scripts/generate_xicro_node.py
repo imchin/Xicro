@@ -187,7 +187,7 @@ def setup_var_protocol():
     # print(Idmsg,nametopic,interfacetopic,dataType,dataName,datagrab,NofData,datatypeProtocol,bytetograb)
     print('Generate variable from msg Done.')
 
-    print('Generate variable from msg Failed.')
+    # print('Generate variable from msg Failed.')
     # return 0,0,0,0,0,0,0,0,0
     for i in range(0,10):
             Idmsg,id_topic,nametopic,interfacetopic,dataType,dataName,NofData=expandSub(Idmsg,[],nametopic,interfacetopic,dataType,dataName,NofData)
