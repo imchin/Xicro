@@ -665,7 +665,7 @@ def gennerate():
         elif(c==76):
             fw.write("\r\rdef setup_var_protocol():\r\r")
             Idmsgg,nametopicc,interfacetopicc,dataTypee,dataNamee,datagrabb,NofDataa,datatypeProtocoll,bytetograbb=setup_var_protocol()
-            cal(115200,bytetograbb,NofDataa,nametopicc)
+            cal(get_params("Baudrate"),bytetograbb,NofDataa,nametopicc)
             fw.write("    return "+str(Idmsgg)+","+str(nametopicc)+","+str(interfacetopicc)+","+str(dataTypee)+","+str(dataNamee)+","+str(datagrabb)+","+str(NofDataa)+","+str(datatypeProtocoll)+","+str(bytetograbb))
             fw.write("\r\r")
             Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut=setup_srv_protocol()
