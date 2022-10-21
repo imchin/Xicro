@@ -216,7 +216,7 @@ void Xicro::_SendInt32(int32_t *data,uint8_t len){
 void Xicro::_SendInt64(int64_t *data,uint8_t len){
     if(len>1){
         const uint16_t sizee=len*8;
-        uint8_t buff[2]={65,0};
+        uint8_t buff[2]={165,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
         _serial->write(buff,2);
@@ -235,7 +235,7 @@ void Xicro::_SendInt64(int64_t *data,uint8_t len){
         _serial->write(sp,sizee);
 
     }else{
-        uint8_t buff[9]={64,0,0,0,0,0,0,0,0};
+        uint8_t buff[9]={164,0,0,0,0,0,0,0,0};
         buff[8] = (uint64_t)*data >> 0  & 0xFF;
         buff[7] = (uint64_t)*data >> 8  & 0xFF;
         buff[6] = (uint64_t)*data >> 16 & 0xFF;
@@ -432,24 +432,33 @@ void Xicro::Spin_node(){
                 q=q>>4;
                 w=w&0b1111;
                 if(q == _Idmcu && w==2){
-                   _state=5;  //check Idtopic
+                    _OnMode=2;
+                    _state=5;  //check Idtopic
+                }else if(q == _Idmcu && w==12){
+                    _OnMode=12;
+                    _state=5; //check Idsrv
                 }else{
                     _state=0;
                 }
                 break;
             case 5:
-                for (int i=0;i<sizeof(_Idtopic_sub);i++){
-                    if(_Idtopic_sub[i]== _datain[0]){
-                        _Indexdata=255;
-                        _OnTopic=i;
-                        _Onindex=0;
-                        _state=6;
-                      
-                        break;
-                    }else{
-                        _state=0;
+                if(_OnMode==2){
+                    for (int i=0;i<sizeof(_Idtopic_sub);i++){
+                        if(_Idtopic_sub[i]== _datain[0]){
+                            _Indexdata=255;
+                            _OnTopic=i;
+                            _Onindex=0;
+                            _state=6;
+                        
+                            break;
+                        }else{
+                            _state=0;
+                        }
                     }
+                }else if(_OnMode==12){
+
                 }
+                
                 break;
             case 6:  //select type
                 if(_datain[0]==_TopicType[_OnTopic][_Onindex]){

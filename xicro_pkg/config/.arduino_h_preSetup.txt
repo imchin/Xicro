@@ -60,4 +60,5 @@ class Xicro{
         uint8_t _Ongrab=0;
         uint8_t _OngrabTo=0;
         uint8_t _statetogo=0;
+        uint8_t _OnMode=0;
 };

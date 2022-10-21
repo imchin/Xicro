@@ -398,7 +398,7 @@ void Xicro::Test(){
 
 //get
 void Xicro::Spin_node(){
-    _Posdata=((UART_HandleTypeDef)*_serial).RxXferSize-((UART_HandleTypeDef)*_serial).hdmarx->Instance->NDTR;
+    _Posdata=((UART_HandleTypeDef)*_serial).RxXferSize-__HAL_DMA_GET_COUNTER(((UART_HandleTypeDef)*_serial).hdmarx);
     if(_Posdata!=_Posdatapre ){
         _datain[0] = _UartBuff[_Posdatapre];
         // _serial->write(_datain,1);

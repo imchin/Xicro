@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+
 from math import ceil
 import os
 import yaml
@@ -44,6 +44,7 @@ def typetoProtocol(typee,Nofdata):
         Nofbyte=4
     elif(typee=="int64"):
         ans=  164
+        Nofbyte=8
     elif(typee=="float32"):
         ans=  111
         Nofbyte=4
@@ -95,17 +96,24 @@ def checkSubmsg(typee):
         else:
             ans=0
     return ans
-def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData):
-    # print("Datatype :",dataType)
-    # print("DataName :",dataName)
-    # print("Nofdata :",NofData)
-    # print("interfacefile :",interfacefile)
-
+def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData,interfacein):
+    # print("\n\n\n\nDatatype :",dataType)
+    # print("\n\n\n\nDataName :",dataName)
+    # print("\n\n\n\nNofdata :",NofData)
+    # print("\n\n\n\ninterfacefile :",interfacefile)
+    # print("\n\n\n\ninterfacefileIn :",interfacein)
     for i in range(0,len(dataType)):
         for j in range(0,len(dataType[i])):
             if(checkSubmsg(dataType[i][j]) == 0):   
-                path = os.path.join(get_package_share_directory(dataType[i][j].split("/")[0]),'msg', dataType[i][j].split("/")[1]+".msg")
+                # print("On : ",dataType[i][j])
+                if(dataType[i][j].find("/")!=-1):
+                    path = os.path.join(get_package_share_directory(dataType[i][j].split("/")[0]),'msg', dataType[i][j].split("/")[1]+".msg")  
+                    Op = dataType[i][j].split("/")[0]         
+                else:
+                    path = os.path.join(get_package_share_directory(interfacein[i][j].split("/")[0]),'msg', dataType[i][j]+".msg")
+                    Op = interfacein[i][j]
                 msg = open(path, 'r').read().splitlines()
+                addinterfacein=[]
                 addtype=[]
                 addName=[]
                 Sname=dataName[i][j]
@@ -114,28 +122,38 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
                     if(len(line)!=0 and line[0]!="#" ):
                         addtype.append(line[0])
                         addName.append(line[1])
+                        addinterfacein.append(Op)
                 for k in range(0,len(addName)):
                     addName[k]=Sname+"."+addName[k]     
+                interfacein[i][j]=addinterfacein
                 dataType[i][j]=addtype
                 dataName[i][j]=addName
-                # print(addtype,addName)
+                # print(addtype,addName,addinterfacein)
+            
     TempType=[]
     TempName=[]
+    Tempinterfaein=[]
     for i in range(0,len(dataType)):  #delist
         q=[]
         w=[]
+        e=[]
         for j in range(0,len(dataType[i])):
             if(type(dataType[i][j])==list):
                 for k in range(0,len(dataType[i][j])):
                     q.append(dataType[i][j][k])
                     w.append(dataName[i][j][k])
+                    e.append(interfacein[i][j][k])
             else:
                 q.append(dataType[i][j])
                 w.append(dataName[i][j])
+                e.append(interfacein[i][j])
         TempType.append(q)
         TempName.append(w)
+        Tempinterfaein.append(e)
     dataType=TempType.copy()
     dataName=TempName.copy()
+    interfacein=Tempinterfaein.copy()
+    # print(TempType,TempName)
     NofData=[]
     for i in range(0,len(dataType)): #check N of data
         q=[]
@@ -148,16 +166,16 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
     #     for j in range(0,len(dataName[i])):
     #         dataName[i][j]=dataName[i][j].replace(".","__of__")
     
-    
     # print("Datatype :",dataType)
     # print("DataName :",dataName)
     # print("Nofdata :",NofData)
-    return id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData
+    return id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData,interfacein
 def setup_var_protocol():
     setup_pub=get_params('Setup_Publisher')
     Idmsg=[]
     nametopic=[]
     interfacetopic=[]
+    interfacein=[]
     for i in range(0,len(setup_pub)):
         Idmsg.append(setup_pub[i][0])
         nametopic.append(setup_pub[i][1])
@@ -170,6 +188,7 @@ def setup_var_protocol():
     datatypeProtocol=[]
     bytetograb=[]
     for i in range (0,len(interfacetopic)):
+        tempinterfacein=[]
         tempType=[]
         tempName=[]
         tempN=[]
@@ -181,17 +200,18 @@ def setup_var_protocol():
                 tempType.append(line[0])
                 tempName.append(line[1])
                 tempN.append(checkNofdata(line[0]))
+                tempinterfacein.append(interfacetopic[i].split("/")[0])
         NofData.append(tempN)
         dataType.append(tempType)
         dataName.append(tempName)
+        interfacein.append(tempinterfacein)
     # print(Idmsg,nametopic,interfacetopic,dataType,dataName,datagrab,NofData,datatypeProtocol,bytetograb)
     print('Generate variable from msg Done.')
 
-    # print('Generate variable from msg Failed.')
+    
     # return 0,0,0,0,0,0,0,0,0
     for i in range(0,10):
-            Idmsg,id_topic,nametopic,interfacetopic,dataType,dataName,NofData=expandSub(Idmsg,[],nametopic,interfacetopic,dataType,dataName,NofData)
-
+            Idmsg,id_topic,nametopic,interfacetopic,dataType,dataName,NofData,interfacein=expandSub(Idmsg,[],nametopic,interfacetopic,dataType,dataName,NofData,interfacein)
     for i in range(0,len(dataType)): # bias float64 to float32
         for j in range(0,len(dataType[i])):
             if(dataType[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
@@ -290,6 +310,7 @@ def setupvarforcreatelib():
     dataType=[]
     dataName=[]
     NofData=[]
+    interfacein=[]
     try:
         id_mcu=get_params("Idmcu")
         Setup_Sub=get_params("Setup_Subscriber")
@@ -298,6 +319,7 @@ def setupvarforcreatelib():
             nameofTopic.append(Setup_Sub[i][1])
             interfacefile.append(Setup_Sub[i][2])
         for i in range (0,len(interfacefile)):
+            tempinterfacein=[]
             tempType=[]
             tempName=[]
             tempdatagrab=[]
@@ -311,11 +333,13 @@ def setupvarforcreatelib():
                     tempName.append(line[1]),NofData
                     tempdatagrab.append(0)
                     tempN.append(checkNofdata(line[0]))
+                    tempinterfacein.append(interfacefile[i].split("/")[0])
             NofData.append(tempN)
             dataType.append(tempType)
             dataName.append(tempName)
+            interfacein.append(tempinterfacein)
         for i in range(0,10):
-            id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData=expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData)
+            id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData,interfacein=expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData,interfacein)
 
     except:
         print("Error setup variable.")
@@ -405,6 +429,9 @@ def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
         for i in range(len(callback)):
             fw.write("    def "+getafterdot(callback[i])+"(self,msg):\r")
             fw.write("        try:\r\r")
+            fw.write("            while(self.Obj_uart.flag_send.value):\r")
+            fw.write("                1\r")
+            fw.write("            self.Obj_uart.flag_send.value = 1\r")
             fw.write("            self.CRC=0\r")
             fw.write("            self._SendStart()\r")
             fw.write("            self._SendSignature("+str(id_mcu)+","+"2)\r")
@@ -420,6 +447,7 @@ def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
                     fw.write("            self._SendStop()\r")
                     
             fw.write("            self._SendCRC()\r")
+            fw.write("            self.Obj_uart.flag_send.value = 0\r")
             fw.write("        except:\r            1\r\r")
             fw.write("\r        return 1\r\r\r\r")
         print("gennerate Callback Done.")
@@ -428,14 +456,16 @@ def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
         print("gennerate Callback Fail.")
     return 0
 def genImport(fw):
-    interfacemsg=[]
     try:
+        fw.write("\r# gen import msg\r")
+        interfacemsg=[]
         Setup_Sub=get_params("Setup_Subscriber")
         for i in range(0,len(Setup_Sub)):
             interfacemsg.append(Setup_Sub[i][2])
         Setup_Pub=get_params("Setup_Publisher")
         for i in range(0,len(Setup_Pub)):
             interfacemsg.append(Setup_Pub[i][2])  
+            
         # print("interfacemsg",interfacemsg)
         tt=[]
         for i in range(0,len(interfacemsg)):
@@ -448,13 +478,165 @@ def genImport(fw):
         interfacemsg=tt.copy()
         for i in range(0,len(interfacemsg)):
             fw.write("from "+interfacemsg[i].split("/")[0]+".msg import "+interfacemsg[i].split("/")[1].split(".")[0] + "\r")
+        fw.write("\r\r# gen import srv\r")
+
+        interfacesrv=[]
+        Setup_Srv=get_params("Setup_Srv_client")
+        for i in range(0,len(Setup_Srv)):
+            interfacesrv.append(Setup_Srv[i][2])  
+        tt=[]
+        for i in range(0,len(interfacesrv)):
+            s=0
+            for j in range(0,len(tt)):
+                if(interfacesrv[i] == tt[j]):
+                    s=s+1
+            if(s==0):
+                tt.append(interfacesrv[i])
+        interfacesrv=tt.copy()
+        for i in range(0,len(interfacesrv)):
+            fw.write("from "+interfacesrv[i].split("/")[0]+".srv import "+interfacesrv[i].split("/")[1].split(".")[0] + "\r")
         fw.write("\r\r")
+
+
         print("Generate Import Interface Done.")
     except:
         print("Generate Import Interface Fail.")
 
 
     return 1
+
+def setup_srv_protocol():
+    setup_srv=get_params('Setup_Srv_client')
+    Idmcu=get_params("Idmcu")
+    Idsrv=[]
+    namesrv=[]
+    interfacesrv=[]
+    timeOut=[]
+    for i in range(0,len(setup_srv)):
+        Idsrv.append(setup_srv[i][0])
+        namesrv.append(setup_srv[i][1])
+        interfacesrv.append(setup_srv[i][2])
+        timeOut.append(setup_srv[i][3])
+    print('Done load YAML srv_client.')
+    # print(Idsrv,namesrv,interfacesrv )
+    dataType_srv_req=[]
+    dataName_srv_req=[]
+    NofData_srv_req=[]
+    datagrab_srv_req=[]
+    datatypeProtocol_srv_req=[]
+    bytetograb_srv_req=[]
+    dataType_srv_res=[]
+    dataName_srv_res=[]
+    NofData_srv_res=[]
+    datagrab_srv_res=[]
+    datatypeProtocol_srv_res=[]
+    bytetograb_srv_res=[]
+    interfacein_srv_req=[]
+    interfacein_srv_res=[]
+    for i in range (0,len(interfacesrv)):  
+        flagP=0
+        tempType_req=[]
+        tempName_req=[]
+        tempN_req=[]
+        tempType_res=[]
+        tempName_res=[]
+        tempN_res=[]
+        tempinterfacein_req=[]
+        tempinterfacein_res=[]
+        path = os.path.join(get_package_share_directory( interfacesrv[i].split("/")[0]),'srv', interfacesrv[i].split("/")[1])
+        srv = open(path, 'r').read().splitlines()
+        for j in range(0,len(srv)):
+            line=srv[j].split()
+            if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
+                tempType_req.append(line[0])
+                tempName_req.append(line[1])
+                tempN_req.append(checkNofdata(line[0]))
+                tempinterfacein_req.append(interfacesrv[i].split("/")[0])
+            elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
+                tempType_res.append(line[0])
+                tempName_res.append(line[1])
+                tempN_res.append(checkNofdata(line[0]))
+                tempinterfacein_res.append(interfacesrv[i].split("/")[0])
+            if(line[0]=="---"):
+                flagP=1
+   
+        NofData_srv_req.append(tempN_req)
+        dataType_srv_req.append(tempType_req)
+        dataName_srv_req.append(tempName_req)
+        interfacein_srv_req.append(tempinterfacein_req)
+
+        NofData_srv_res.append(tempN_res)
+        dataType_srv_res.append(tempType_res)
+        dataName_srv_res.append(tempName_res)
+        interfacein_srv_res.append(tempinterfacein_res)
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+
+    for i in range(0,10):
+            Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req)
+            Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res)
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+    for i in range(0,len(dataType_srv_req)): # bias float64 to float32
+        for j in range(0,len(dataType_srv_req[i])):
+            if(dataType_srv_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_srv_req[i][j]="float32"
+    for i in range(0,len(dataType_srv_res)): # bias float64 to float32
+        for j in range(0,len(dataType_srv_res[i])):
+            if(dataType_srv_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_srv_res[i][j]="float32"
+
+    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
+    for p in range(0,2):
+        if(p==0):
+            dataType=dataType_srv_req
+            NofData=NofData_srv_req
+        elif(p==1):
+            dataType=dataType_srv_res
+            NofData=NofData_srv_res
+        for i in range(0,len(dataType)):
+            tempbytetograb=[]
+            tempdataprotocol=[]
+            tempdatagrab=[]
+            for j in range(0,len(dataType[i])):
+                #data type remove []
+                if(NofData[i][j]!=1):
+                    tt=[]
+                    for k in range(0,NofData[i][j]):
+                        if(dataType[i][j].split("[")[0]=="string"):
+                            tt.append("")
+                        elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
+                            tt.append(0.0)
+                        elif(dataType[i][j].split("[")[0]=="bool"):
+                            tt.append(False)   
+                        else:
+                            tt.append(0)
+                    tempdatagrab.append(tt)
+                else:
+                    if(dataType[i][j]=="string"):
+                        tempdatagrab.append("")
+                    elif(dataType[i][j]=="float32" or dataType[i][j]=="float64"):
+                        tempdatagrab.append(0.0)
+                    elif(dataType[i][j]=="bool"):
+                        tempdatagrab.append(False)
+                    else:
+                        tempdatagrab.append(0) 
+
+                if(dataType[i][j].find("[")!=-1 ):
+                    dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
+                a,b=typetoProtocol(dataType[i][j],NofData[i][j])
+                tempdataprotocol.append(a)
+                tempbytetograb.append(b)
+            
+            if(p==0):
+                datatypeProtocol_srv_req.append(tempdataprotocol)
+                bytetograb_srv_req.append(tempbytetograb)
+                datagrab_srv_req.append(tempdatagrab)
+            elif(p==1):
+                datatypeProtocol_srv_res.append(tempdataprotocol)
+                bytetograb_srv_res.append(tempbytetograb)
+                datagrab_srv_res.append(tempdatagrab)
+    return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut
+
+
 def gennerate(): 
     
     id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,Nofdata=setupvarforcreatelib()
@@ -476,21 +658,28 @@ def gennerate():
     callback=[]
     for line in fr:
         c=c+1
-        if(c==157):
+        if(c==158):
             callback=genSub(fw,nameofTopic,interfacefile)
-        elif(c==405):
+        elif(c==406):
             gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata)
-        elif(c==75):
+        elif(c==76):
             fw.write("\r\rdef setup_var_protocol():\r\r")
             Idmsgg,nametopicc,interfacetopicc,dataTypee,dataNamee,datagrabb,NofDataa,datatypeProtocoll,bytetograbb=setup_var_protocol()
+            cal(115200,bytetograbb,NofDataa,nametopicc)
             fw.write("    return "+str(Idmsgg)+","+str(nametopicc)+","+str(interfacetopicc)+","+str(dataTypee)+","+str(dataNamee)+","+str(datagrabb)+","+str(NofDataa)+","+str(datatypeProtocoll)+","+str(bytetograbb))
             fw.write("\r\r")
-        elif(c==439):
+            Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut=setup_srv_protocol()
+            fw.write("\r\rdef setup_srv_protocol():\r\r")
+            fw.write("    return "+str(Idsrv)+","+str(namesrv)+","+str(interfacesrv)+","+str(dataType_srv_req)+","+str(dataName_srv_req)+","+str(datagrab_srv_req)+","+str(NofData_srv_req)+","+str(datatypeProtocol_srv_req)+","+str(bytetograb_srv_req)+","+str(dataType_srv_res)+","+str(dataName_srv_res)+","+str(datagrab_srv_res)+","+str(NofData_srv_res)+","+str(datatypeProtocol_srv_res)+","+str(bytetograb_srv_res)+","+str(timeOut))
+            fw.write("\r\r")
+        elif(c==452):
             fw.write("    Idmcu = "+str(id_mcu)+"\n")
         elif(c==10):
-            fw.write("#gen\r")
+            fw.write("# gen Import interfaces\r")
             genImport(fw)
-        elif(c==799):
+        elif(c==869):
+            fw.write("        self.Idmcu = "+str(id_mcu)+"\n")
+        elif(c==856):
             fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
         else:
             fw.write(line)
@@ -502,7 +691,7 @@ def addentrypoint():
    
     for line in f:
         entryp.append(line)
-      
+    
 
 
     entrystring="  scripts/"+"xicro_node_"+get_params("Namespace")+"_ID_"+str(get_params("Idmcu"))+'_'+sys.argv[1]+'.py\n'
