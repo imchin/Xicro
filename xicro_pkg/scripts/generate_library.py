@@ -41,7 +41,7 @@ def checkNofdata(dataType):
         return 1
 
 def checkSubmsg(typee):
-    supporttypee=["int8","int16","int32","int64","uint8","uint16","uint32","uint64","bool","float32","float64","string"]
+    supporttypee=["int8","int16","int32","int64","uint8","uint16","uint32","uint64","bool","float32","float64","string","xxicro_Empty"]
     ans=1
     for i in range(0,len(supporttypee)):
         if(typee.find(supporttypee[i])!= -1):
@@ -481,6 +481,7 @@ def typetoProtocol_2(typee,Nofdata):
         Nofbyte=4
     elif(typee=="int64"):
         ans=  164
+        Nofbyte=8 
     elif(typee=="float32"):
         ans=  111
         Nofbyte=4
@@ -496,6 +497,9 @@ def typetoProtocol_2(typee,Nofdata):
     elif(typee=="bool" ):
         ans= 88
         Nofbyte=1
+    elif(typee=="xxicro_Empty" ):
+        ans= 254
+        Nofbyte=1   
     if(Nofdata==1):
         return ans,Nofbyte
     elif(typee=="bool" ):
@@ -535,6 +539,8 @@ def typetoProtocol(typee):
         t=242
     elif(typee=="bool" ):
         t=88
+    elif(typee=="xxicro_Empty"):
+        t=254
     if(flag):
         return str(t+1)
     else:
@@ -624,33 +630,49 @@ def setup_srv_protocol():
         srv = open(path, 'r').read().splitlines()
         for j in range(0,len(srv)):
             line=srv[j].split()
-            if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
-                tempType_req.append(line[0])
-                tempName_req.append(line[1])
-                tempN_req.append(checkNofdata(line[0]))
-                tempinterfacein_req.append(interfacesrv[i].split("/")[0])
-            elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
-                tempType_res.append(line[0])
-                tempName_res.append(line[1])
-                tempN_res.append(checkNofdata(line[0]))
-                tempinterfacein_res.append(interfacesrv[i].split("/")[0])
-            if(line[0]=="---"):
-                flagP=1
-   
-        NofData_srv_req.append(tempN_req)
-        dataType_srv_req.append(tempType_req)
-        dataName_srv_req.append(tempName_req)
-        interfacein_srv_req.append(tempinterfacein_req)
+            if(len(line)>0):
+                if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
+                    tempType_req.append(line[0])
+                    tempName_req.append(line[1])
+                    tempN_req.append(checkNofdata(line[0]))
+                    tempinterfacein_req.append(interfacesrv[i].split("/")[0])
+                elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
+                    tempType_res.append(line[0])
+                    tempName_res.append(line[1])
+                    tempN_res.append(checkNofdata(line[0]))
+                    tempinterfacein_res.append(interfacesrv[i].split("/")[0])
+                if(line[0]=="---"):
+                    flagP=1
+        # print(tempN_req)
+        # print(tempType_req)
+        # print(tempName_req)
+        # print(tempinterfacein_req)
+        if(len(tempType_req)==0):
+            NofData_srv_req.append([1])
+            dataType_srv_req.append(["xxicro_Empty"])
+            dataName_srv_req.append(["xxicro_Empty"])
+            interfacein_srv_req.append([interfacesrv[i].split("/")[0]])
+        else:
+            NofData_srv_req.append(tempN_req)
+            dataType_srv_req.append(tempType_req)
+            dataName_srv_req.append(tempName_req)
+            interfacein_srv_req.append(tempinterfacein_req)
 
-        NofData_srv_res.append(tempN_res)
-        dataType_srv_res.append(tempType_res)
-        dataName_srv_res.append(tempName_res)
-        interfacein_srv_res.append(tempinterfacein_res)
+        if(len(tempType_res)==0):
+            NofData_srv_res.append([1])
+            dataType_srv_res.append(["xxicro_Empty"])
+            dataName_srv_res.append(["xxicro_Empty"])
+            interfacein_srv_res.append([interfacesrv[i].split("/")[0]])
+        else:
+            NofData_srv_res.append(tempN_res)
+            dataType_srv_res.append(tempType_res)
+            dataName_srv_res.append(tempName_res)
+            interfacein_srv_res.append(tempinterfacein_res)
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
 
     for i in range(0,10):
-            Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req)
-            Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res)
+        Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req)
+        Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res)
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
     for i in range(0,len(dataType_srv_req)): # bias float64 to float32
         for j in range(0,len(dataType_srv_req[i])):
@@ -694,6 +716,8 @@ def setup_srv_protocol():
                         tempdatagrab.append(0.0)
                     elif(dataType[i][j]=="bool"):
                         tempdatagrab.append(False)
+                    elif(dataType[i][j]=="xxicro_Empty"):
+                        tempdatagrab.append("xxicro_Empty")
                     else:
                         tempdatagrab.append(0) 
 
@@ -711,7 +735,7 @@ def setup_srv_protocol():
                 datatypeProtocol_srv_res.append(tempdataprotocol)
                 bytetograb_srv_res.append(tempbytetograb)
                 datagrab_srv_res.append(tempdatagrab)
-
+    # print(Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res)
     return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res
 
 def genstate_srv(fw):
@@ -767,7 +791,7 @@ def create_hFile(listVoid,Idmcu,listVoid_client_req):
 
                 except:
                     print("gen public_struct or voidPub Fail.")
-            elif(c==56):
+            elif(c==57):
                 try:
                     gen_privateStruct(fw)
                     publicStructToprivateStruct(fw,public_struct)
@@ -911,6 +935,7 @@ def convertdatatype(strr):
         return "std::string"
     elif(strr== "bool"):
         return "bool"
+  
     else:
         return "ERRORTYPE"
 
@@ -969,10 +994,11 @@ def typetoVoid(typee,namee,Nofdata,cond):
         return  "    _SendBool((bool*)&"+namee+","+ str(Nofdata)+","+str(int(cond))+");\n"
     elif(typee=="bool" and Nofdata!=1):
         return  "    _SendBool("+namee+","+ str(Nofdata)+","+str(int(cond))+");\n"
- 
+    elif(typee=="xxicro_Empty" and Nofdata==1):
+        return  "    _SendEmpty();\n"
     else:
 
-        print(typee)
+        print(typee )
         return "1"
 
 def strVoid(nameofTopic,dataType,dataName,Nofdata):
@@ -998,13 +1024,14 @@ def strVoid_srv_req():
     for i in range(0,len(namesrv)):
         t="        "
         t=t+"void service_call_"+namesrv[i]+"("
-        for j in range(0,len(dataType_srv_req[i])):
-            t=t+convertdatatype(dataType_srv_req[i][j])+" "
-            if(NofData_srv_req[i][j]!=1):
-                t=t+"*"
-            t=t+dataName_srv_req[i][j]+" "
-            if(j>=0 and j<len(dataType_srv_req[i])-1):
-                t=t+","
+        if(dataType_srv_req[i][0]!="xxicro_Empty"):
+            for j in range(0,len(dataType_srv_req[i])):
+                t=t+convertdatatype(dataType_srv_req[i][j])+" "
+                if(NofData_srv_req[i][j]!=1):
+                    t=t+"*"
+                t=t+dataName_srv_req[i][j]+" "
+                if(j>=0 and j<len(dataType_srv_req[i])-1):
+                    t=t+","
         t=t+");"
         temp.append(t)
     # print(temp)

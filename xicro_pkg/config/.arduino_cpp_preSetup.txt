@@ -354,6 +354,11 @@ void Xicro::_SendIdTopic(uint8_t IdTopic){
     _crc=_getcrc(_crc,&IdTopic,1);
     _serial->write(IdTopic);
 }
+void Xicro::_SendEmpty(){
+    uint8_t em=254;
+    _crc=_getcrc(_crc,&em,1);
+    _serial->write(em);
+}
 void Xicro::Test(){
     
 

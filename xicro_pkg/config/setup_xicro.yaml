@@ -1,9 +1,9 @@
 Idmcu: 3
-Namespace: "sub_N_pub"
+Namespace: "read_imu"
 Port: "/dev/ttyACM0"
 generate_library_Path: "arduino/libraries"
-Baudrate: 115200
-Setup_Publisher:  [         [1,"nav2_arduino","nav_msgs/Odometry.msg"],[2,"twist_arduino","geometry_msgs/Twist.msg"]         ]
-Setup_Subscriber: [         [2,"nav2","nav_msgs/Odometry.msg"]                    ]
-Setup_Srv_client: [         [1,"add_two_ints","example_interfaces/AddTwoInts.srv",2.54]         ]
+Baudrate: 57600
+Setup_Publisher:  [         [1,"Imu_arduino","sensor_msgs/Imu.msg"]         ]
+Setup_Subscriber: [         ]
+Setup_Srv_client: [         ]
 

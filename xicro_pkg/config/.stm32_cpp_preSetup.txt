@@ -376,6 +376,11 @@ void Xicro::_SendIdTopic(uint8_t IdTopic){
     _crc=_getcrc(_crc,&IdTopic,1);
     HAL_UART_Transmit(_serial, &IdTopic, 1, 1000);
 }
+void Xicro::_SendEmpty(){
+    uint8_t em=254;
+    _crc=_getcrc(_crc,&em,1);
+    HAL_UART_Transmit(_serial, &em, 1, 1000);
+}
 void Xicro::Test(){
     
 

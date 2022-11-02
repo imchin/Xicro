@@ -33,6 +33,7 @@ class Xicro{
         void _SendString(std::string *data,uint8_t len);
         void _SendBool(bool *data,uint8_t len,bool flagNext);
         void _SendIdTopic(uint8_t IdTopic);
+        void _SendEmpty();
 
         uint8_t _crc=0;
         void _Sendcrc();
@@ -47,13 +48,12 @@ class Xicro{
         uint8_t _Indexdata=0;
         uint8_t _crcIn=0;
        
-
         std::string _bufff="";
         uint8_t q=0;
         uint8_t w=0; 
         uint8_t _loop=0;
         uint8_t _loopTo=0;
-
+        // gen private struct
 
 
         uint8_t _Onindex=0;

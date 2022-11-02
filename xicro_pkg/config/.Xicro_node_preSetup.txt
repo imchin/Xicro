@@ -65,6 +65,9 @@ def typetoProtocol(typee,Nofdata):
     elif(typee=="bool" ):
         ans= 88
         Nofbyte=1
+    elif(typee=="xxicro_Empty" ):
+        ans= 254
+        Nofbyte=1  
     if(Nofdata==1):
         return ans,Nofbyte
     elif(typee=="bool" ):
@@ -138,52 +141,39 @@ class Publisher_node(Node):
         # print(msg)
         self.obj[index].publish(msg)
 
-
-
-
-class Subscriber_node(Node):
+class Xicro_instruction():
     def __init__(self,Obj_uart):
-        super().__init__('Xicro_Subscriber_Node')
         self.Obj_uart = Obj_uart
-
-        
-        
-        
         self.CRC=0
         self.crcc=CRC8_Xicro()
-        time.sleep(1)
-
- 
-        
-
+        self.Buff_send = []
     def _SendStart(self):
         start=[73,109,64,99]
         self.CRC=self.crcc.CheckList(self.CRC,start)
-        self.Obj_uart.ser.write(bytearray(start))
+        self.Buff_send.extend(start)
         return 1
     def _SendStop(self):
         stop=[126,126]
         self.CRC=self.crcc.CheckList(self.CRC,stop)
-        self.Obj_uart.ser.write(bytearray(stop)) 
+        self.Buff_send.extend(stop)
         return 1
     def _SendContinue(self):
         con=[42,42]
         self.CRC=self.crcc.CheckList(self.CRC,con)
-        self.Obj_uart.ser.write(bytearray(con))
+        self.Buff_send.extend(con)
         return 1
     def _SendCRC(self):
-        crc=[self.CRC]
-        self.Obj_uart.ser.write(bytearray(crc))
+        self.Buff_send.append(self.CRC)
     def _SendSignature(self,Idmcu,Mode):
         buff=[0]
         buff[0]=Idmcu<<4
         buff[0]=buff[0]|Mode
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendIdtopic(self,Idtopic):
         buff=[Idtopic&0xFF]
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendUint8(self,data,len):
         if(len>1):
             buff=[9]
@@ -194,7 +184,7 @@ class Subscriber_node(Node):
             buff=[8,0]
             buff[1]=data&0xff
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendUint16(self,data,len):
         if(len>1):
             buff=[17]
@@ -207,7 +197,7 @@ class Subscriber_node(Node):
             buff.append(data >> 8 & 0xFF)
             buff.append(data >> 0 & 0xFF)
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendUint32(self,data,len):
         if(len>1):
             buff=[33]
@@ -224,7 +214,7 @@ class Subscriber_node(Node):
             buff.append(data >>  8 & 0xFF)
             buff.append(data >>  0 & 0xFF)
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendUint64(self,data,len):
         if(len>1):
             buff=[65]
@@ -249,7 +239,7 @@ class Subscriber_node(Node):
             buff.append(data >>  8 & 0xFF)
             buff.append(data >>  0 & 0xFF)
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
 
     def _SendInt8(self,data,len):
         if(len>1):
@@ -261,7 +251,7 @@ class Subscriber_node(Node):
             buff=[18,0]
             buff[1]=data&0xff
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendInt16(self,data,len):
         if(len>1):
             buff=[117]
@@ -274,7 +264,7 @@ class Subscriber_node(Node):
             buff.append(data >> 8 & 0xFF)
             buff.append(data >> 0 & 0xFF)
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendInt32(self,data,len):
         if(len>1):
             buff=[133]
@@ -291,7 +281,7 @@ class Subscriber_node(Node):
             buff.append(data >>  8 & 0xFF)
             buff.append(data >>  0 & 0xFF)
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendInt64(self,data,len):
         if(len>1):
             buff=[165]
@@ -317,7 +307,7 @@ class Subscriber_node(Node):
             buff.append(data >>  8 & 0xFF)
             buff.append(data >>  0 & 0xFF)
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
 
     def _SendString(self,data,lenn):
         if(lenn>1):
@@ -335,7 +325,7 @@ class Subscriber_node(Node):
             buff.extend(list(txt))
             buff.extend([42,126])
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendFloat32(self,data,lenn):
         if(lenn>1):
             buff=[112]
@@ -348,7 +338,7 @@ class Subscriber_node(Node):
             ff=bytearray(struct.pack(">f", data))
             buff.extend(list(ff))
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendFloat64(self,data,lenn):
         if(lenn>1):
             buff=[223]
@@ -361,7 +351,7 @@ class Subscriber_node(Node):
             ff=bytearray(struct.pack(">d", data))
             buff.extend(list(ff))
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
+        self.Buff_send.extend(buff)
     def _SendBool(self,data,lenn,flagCon):
         if(lenn>1):
             sizee=2
@@ -395,11 +385,28 @@ class Subscriber_node(Node):
                 else:
                     buff.extend([127,127])     
         self.CRC=self.crcc.CheckList(self.CRC,buff)
-        self.Obj_uart.ser.write(bytearray(buff))
-       
+        self.Buff_send.extend(buff)
+    def _To_Send(self):
+        self.Obj_uart.queue_Send(self.Buff_send)
+        return 1
+    def _Reset_Buff(self):
+        self.Buff_send = []
+        return 1
+    def _Reset_CRC(self):
+        self.CRC = 0
+        return 1
+        
+class Subscriber_node(Node):
+    def __init__(self,Obj_uart):
+        super().__init__('Xicro_Subscriber_Node')
+        self.Obj_uart = Obj_uart 
+        self.xicro_instruction = Xicro_instruction(self.Obj_uart) 
+        time.sleep(1)
 
-    
-    
+        # gen sub 
+
+
+    # gen callback sub
 
     
        
@@ -428,7 +435,7 @@ def Receive_uart(Obj_uart): #processer 1
         except:
             1
 
-def Protocol_XicroToRos_spin(Obj_uart,ModeEx): #processer 2,4
+def Protocol_XicroToRos_spin(Obj_uart,ModeEx): #processer 3,5
 
    
     if(ModeEx==0):
@@ -446,10 +453,9 @@ def Protocol_XicroToRos_spin(Obj_uart,ModeEx): #processer 2,4
     Idmsg,nametopic,interfacetopic,dataType,dataName,datagrab,NofData,datatypeProtocol,byteTograb=setup_var_protocol() # get variable from yaml
     pipe=[888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888]
     Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut = setup_srv_protocol()
-    Idmcu = 3
     r_pipe=0
     # gen Id
-
+    
     OnIdsrv=0
     OnMode=0
     OnIdmsg=0
@@ -467,7 +473,7 @@ def Protocol_XicroToRos_spin(Obj_uart,ModeEx): #processer 2,4
         # Obj_uart.count2.value=Obj_uart.count2.value+1
         try:
             if(Indexpre_value != Obj_uart.index.value):  # state machine
-                # print(Obj_uart.Buff[Indexpre_value.value])
+                # print(Obj_uart.Buff[Indexpre_value])
 
 
                 if(state==0 and Obj_uart.Buff[Indexpre_value] == 73 ):
@@ -521,19 +527,22 @@ def Protocol_XicroToRos_spin(Obj_uart,ModeEx): #processer 2,4
                         for i in range (0,len(Idsrv)):
                             # print(Obj_uart.Buff[Indexpre_value] , Idsrv[i])
                             if(Obj_uart.Buff[Indexpre_value] == Idsrv[i]):
-                                OnIdsrv=Idmsg[i]
+                                OnIdsrv=Idsrv[i]
                                 Ongrab=datagrab_srv_req[i].copy()
                                 Ontype=dataType_srv_req[i].copy()
                                 OnNofdata=NofData_srv_req[i].copy()
                                 OntypeProtocol=datatypeProtocol_srv_req[i].copy()
+                                # print(OntypeProtocol)
                                 OntypeIndex=-1
                                 OnbyteTograb=bytetograb_srv_req[i].copy()
                                 state=6
+                                break
                             else:
                                 state=0
                     else:
                         state=0
                 elif(state==6):
+                    
                     OntypeIndex=OntypeIndex+1
                     # print("ONTYPEEEINDEX",OntypeIndex)
                     # print("dddd",Obj_uart.Buff[Indexpre_value] ,OntypeProtocol[OntypeIndex])
@@ -575,6 +584,8 @@ def Protocol_XicroToRos_spin(Obj_uart,ModeEx): #processer 2,4
                             COUNTbuffin=0
                             TEMPbuff=[]
                             state=201  # getNofdata
+                        elif(OntypeProtocol[OntypeIndex]==254): # Empty
+                            state=44 # main check stop
                         else:
                             state=0
                     else:
@@ -801,34 +812,15 @@ class CRC8_Xicro():
 
     
     
-# q=CRC8_Xicro()
-# w=[73]
-# q.begin(w)
-# q.startCom(0)
-# w.append(99)
-# q.update(1)
-# q.startCom(0)
 
-# print(q.CheckList([243, 2, 70, 111, 110, 95, 109, 97, 114, 107, 42, 126, 110, 97, 114, 97, 107, 95, 115, 115, 115, 42, 126]))
-
-   
-
-# while(1):
-#     1
 
 def Protocol_RosToXicro_spin(Obj_uart): #processer 3
     rclpy.init()
     q=Subscriber_node(Obj_uart)
     rclpy.spin(q)
-    # while(1):
-    #     # v2.value=v2.value+1
-    #     # print(v.value)
-    #     # q=[73,73]
-    #     # ser.ser.write(bytearray(q))
-    #     # print(Obj_uart.Buff[1:10])
-    #     1
 
-# get-+
+
+# get
 class Uart():
     def __init__(self,mp):
         self.Buff = mp.Array('d',np.zeros(1000))
@@ -836,6 +828,8 @@ class Uart():
         self.Indexpre_value =  mp.Value('i',0)
         self.Indexpre_value2 =  mp.Value('i',0)
         self.flag_send =  mp.Value('i',0)
+        self.mana = mp.Manager()
+        self.Buff_SSend = self.mana.list()
 
         try:
             self.port = sys.argv[1]
@@ -846,14 +840,10 @@ class Uart():
      
         self.ser = self.check_port_open(self.port)
 
-        # self.count  =  mp.Value('i',0)
-        # self.count2  =  mp.Value('i',0)
-
-
     def check_port_open(self,Port):
         try:
             # gen port
-
+            ser = serial.Serial(Port,115200, timeout=1000 ,stopbits=1)
             print(Port + ': port is Open.')
         
             return ser
@@ -862,11 +852,24 @@ class Uart():
             
         return 0
 
+    def queue_Send(self,send_ll):
+
+        self.Buff_SSend.append(send_ll)
+        
+        return 1
+
+def Transmit_uart(Obj_uart): #processer 2
+    print("Start Transmit Uart : "+ Obj_uart.port)
+    while(1):
+        if(len(Obj_uart.Buff_SSend)>0):
+            Obj_uart.ser.write(bytearray(Obj_uart.Buff_SSend[0]))
+            Obj_uart.Buff_SSend.pop(0)
+
 class Srv_client_node(Node):   
     def __init__(self,Obj_uart,OnIdsrv,Ongrab,sequence):
         super().__init__('Xicro_Service_Client_Node_'+str(sequence))
         # gen Id mcu
-        self.Idmcu=3
+
         self.crcc = CRC8_Xicro()
         self.CRC=0
         self.Obj_uart = Obj_uart
@@ -885,7 +888,9 @@ class Srv_client_node(Node):
         srv=globals()[srv.split(".")[0]].Request()
         for i in range(0,len(self.NofData_srv_req[self.OnIdsrv_index])):  # exec data to srv.req
             for j in range(0,self.NofData_srv_req[self.OnIdsrv_index][i]):
-                if(self.NofData_srv_req[self.OnIdsrv_index][i]==1):
+                if(self.dataName_srv_req[self.OnIdsrv_index][i]=="xxicro_Empty"):
+                    1
+                elif(self.NofData_srv_req[self.OnIdsrv_index][i]==1):
                     exec("%s = %s" % (("srv."+self.dataName_srv_req[self.OnIdsrv_index][i]) ,"self.Ongrab[i]") )
                 else:
                     exec("%s = %s" % (("srv."+self.dataName_srv_req[self.OnIdsrv_index][i]+"["+str(j)+"]") ,"self.Ongrab[i][j]") )
@@ -947,7 +952,7 @@ class Srv_client_node(Node):
 
         return 1
     def _SendNotresponse(self):
-        erorr=[255]
+        erorr=[252]
         self.CRC=self.crcc.CheckList(self.CRC,erorr)
         self.Obj_uart.ser.write(bytearray(erorr))
         return 1
@@ -1209,60 +1214,34 @@ def main():
     try:
 
 
-        
-       
         Obj_uart = Uart(mp)    # create Uart object
 
-        p  = mp.Process(target=Receive_uart,args=(Obj_uart,))
-        p2 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,0))  # Spin pub
-        p3 = mp.Process(target=Protocol_RosToXicro_spin,args=(Obj_uart,))
-        p4 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,1))  # Spin srv Client
+        p  = mp.Process(target=Receive_uart,args=(Obj_uart,)) 
+        p2 = mp.Process(target=Transmit_uart,args=(Obj_uart,))
+        p3 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,0))  # Spin pub
+        p4 = mp.Process(target=Protocol_RosToXicro_spin,args=(Obj_uart,))   # Spin callback sub
+        p5 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,1))  # Spin srv Client
+      
         p.start()
         p2.start()
         p3.start()
         p4.start()
+        p5.start()
 
-        # tp=time.time()
-        # s11=Obj_uart.count.value
-        # s22=Obj_uart.count2.value
         while(1):
-            # if(time.time()-tp>=1):
-            #     tp=time.time()
-            #     print("T1= " , Obj_uart.count.value-s11)
-            #     print("T2= " , Obj_uart.count2.value-s22)
-            #     s11=Obj_uart.count.value
-            #     s22=Obj_uart.count2.value
             1
 
-
-        # p.terminate()
-        # p2.terminate()
     except KeyboardInterrupt:
         p.terminate()
         p2.terminate()
         p3.terminate()   
         p4.terminate()
+        p5.terminate()
                  
     finally:
         rclpy.shutdown()
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

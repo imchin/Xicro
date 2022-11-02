@@ -60,6 +60,9 @@ def typetoProtocol(typee,Nofdata):
     elif(typee=="bool" ):
         ans= 88
         Nofbyte=1
+    elif(typee=="xxicro_Empty" ):
+        ans= 254
+        Nofbyte=1   
     if(Nofdata==1):
         return ans,Nofbyte
     elif(typee=="bool" ):
@@ -87,7 +90,7 @@ def checkNofdata(dataType):
     else:
         return 1
 def checkSubmsg(typee):
-    supporttypee=["int8","int16","int32","int64","uint8","uint16","uint32","uint64","bool","float32","float64","string"]
+    supporttypee=["int8","int16","int32","int64","uint8","uint16","uint32","uint64","bool","float32","float64","string","xxicro_Empty"]
     ans=1
     for i in range(0,len(supporttypee)):
         if(typee.find(supporttypee[i])!= -1):
@@ -390,33 +393,33 @@ def typetofunc(typee,namee,Nofdata,cond):
     # print(Nofdata,typee)    
     try:
         if(typee=="uint8"):
-            return    "            self._SendUint8(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendUint8(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="uint16"):
-            return  "            self._SendUint16(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendUint16(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="uint32"):
-            return  "            self._SendUint32(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendUint32(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="uint64"):
-            return  "            self._SendUint64(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendUint64(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="int8"):
-            return  "            self._SendInt8(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendInt8(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="int16"):
-            return  "            self._SendInt16(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendInt16(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="int32"):
-            return  "            self._SendInt32(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendInt32(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="int64"):
-            return  "            self._SendInt64(msg."+namee+","+str(Nofdata)+ ")\n"  
+            return  "        self.xicro_instruction._SendInt64(msg."+namee+","+str(Nofdata)+ ")\n"  
         elif(typee=="float32"):
-            return  "            self._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"  
+            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"  
         elif(typee=="string"):
-            return  "            self._SendString(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendString(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="bool" and Nofdata==1):
-            return  "            self._SendBool(msg."+namee+",1,"+str(cond)+ ")\n"
+            return  "        self.xicro_instruction._SendBool(msg."+namee+",1,"+str(cond)+ ")\n"
         elif(typee=="bool" and Nofdata!=1):
-            return  "            self._SendBool(msg."+namee+","+str(Nofdata)+","+str(cond)+ ")\n"
+            return  "        self.xicro_instruction._SendBool(msg."+namee+","+str(Nofdata)+","+str(cond)+ ")\n"
         elif(typee=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
-            return  "            self._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"    
+            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"    
         elif(typee=="float64"):
-            return  "            self._SendFloat64(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendFloat64(msg."+namee+","+str(Nofdata)+ ")\n"
         else:
             print("ErorType : ",typee)
             return "1"
@@ -425,30 +428,26 @@ def typetofunc(typee,namee,Nofdata,cond):
     return "0"
 def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
     try:
-        fw.write("    # gen\r")
+        fw.write("    # gen callback Sub\r")
         for i in range(len(callback)):
             fw.write("    def "+getafterdot(callback[i])+"(self,msg):\r")
-            fw.write("        try:\r\r")
-            fw.write("            while(self.Obj_uart.flag_send.value):\r")
-            fw.write("                1\r")
-            fw.write("            self.Obj_uart.flag_send.value = 1\r")
-            fw.write("            self.CRC=0\r")
-            fw.write("            self._SendStart()\r")
-            fw.write("            self._SendSignature("+str(id_mcu)+","+"2)\r")
-            fw.write("            self._SendIdtopic("+str(id_topic[i])+")\r")
+            fw.write("        self.xicro_instruction._Reset_Buff()\r")
+            fw.write("        self.xicro_instruction._Reset_CRC()\r")
+            fw.write("        self.xicro_instruction._SendStart()\r")
+            fw.write("        self.xicro_instruction._SendSignature("+str(id_mcu)+","+"2)\r")
+            fw.write("        self.xicro_instruction._SendIdtopic("+str(id_topic[i])+")\r")
             for j in range (0,len(dataType[i])):
                 cond=j<len(dataType[i])-1 #check flag continue or stop
                 fw.write(typetofunc(dataType[i][j],dataName[i][j],Nofdata[i][j],cond))
                 if(dataType[i][j]=="bool" and Nofdata[i][j]==1 ):
                     fw.write("# auto by 1 bool\n")
                 elif(cond):
-                    fw.write("            self._SendContinue()\r")
+                    fw.write("        self.xicro_instruction._SendContinue()\r")
                 else:
-                    fw.write("            self._SendStop()\r")
+                    fw.write("        self.xicro_instruction._SendStop()\r")
                     
-            fw.write("            self._SendCRC()\r")
-            fw.write("            self.Obj_uart.flag_send.value = 0\r")
-            fw.write("        except:\r            1\r\r")
+            fw.write("        self.xicro_instruction._SendCRC()\r")
+            fw.write("        self.xicro_instruction._To_Send()\r")
             fw.write("\r        return 1\r\r\r\r")
         print("gennerate Callback Done.")
         return 1
@@ -547,33 +546,49 @@ def setup_srv_protocol():
         srv = open(path, 'r').read().splitlines()
         for j in range(0,len(srv)):
             line=srv[j].split()
-            if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
-                tempType_req.append(line[0])
-                tempName_req.append(line[1])
-                tempN_req.append(checkNofdata(line[0]))
-                tempinterfacein_req.append(interfacesrv[i].split("/")[0])
-            elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
-                tempType_res.append(line[0])
-                tempName_res.append(line[1])
-                tempN_res.append(checkNofdata(line[0]))
-                tempinterfacein_res.append(interfacesrv[i].split("/")[0])
-            if(line[0]=="---"):
-                flagP=1
-   
-        NofData_srv_req.append(tempN_req)
-        dataType_srv_req.append(tempType_req)
-        dataName_srv_req.append(tempName_req)
-        interfacein_srv_req.append(tempinterfacein_req)
+            if(len(line)>0):
+                if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
+                    tempType_req.append(line[0])
+                    tempName_req.append(line[1])
+                    tempN_req.append(checkNofdata(line[0]))
+                    tempinterfacein_req.append(interfacesrv[i].split("/")[0])
+                elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
+                    tempType_res.append(line[0])
+                    tempName_res.append(line[1])
+                    tempN_res.append(checkNofdata(line[0]))
+                    tempinterfacein_res.append(interfacesrv[i].split("/")[0])
+                if(line[0]=="---"):
+                    flagP=1
+        # print(tempN_req)
+        # print(tempType_req)
+        # print(tempName_req)
+        # print(tempinterfacein_req)
+        if(len(tempType_req)==0):
+            NofData_srv_req.append([1])
+            dataType_srv_req.append(["xxicro_Empty"])
+            dataName_srv_req.append(["xxicro_Empty"])
+            interfacein_srv_req.append([interfacesrv[i].split("/")[0]])
+        else:
+            NofData_srv_req.append(tempN_req)
+            dataType_srv_req.append(tempType_req)
+            dataName_srv_req.append(tempName_req)
+            interfacein_srv_req.append(tempinterfacein_req)
 
-        NofData_srv_res.append(tempN_res)
-        dataType_srv_res.append(tempType_res)
-        dataName_srv_res.append(tempName_res)
-        interfacein_srv_res.append(tempinterfacein_res)
+        if(len(tempType_res)==0):
+            NofData_srv_res.append([1])
+            dataType_srv_res.append(["xxicro_Empty"])
+            dataName_srv_res.append(["xxicro_Empty"])
+            interfacein_srv_res.append([interfacesrv[i].split("/")[0]])
+        else:
+            NofData_srv_res.append(tempN_res)
+            dataType_srv_res.append(tempType_res)
+            dataName_srv_res.append(tempName_res)
+            interfacein_srv_res.append(tempinterfacein_res)
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
 
     for i in range(0,10):
-            Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req)
-            Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res)
+        Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req)
+        Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res)
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
     for i in range(0,len(dataType_srv_req)): # bias float64 to float32
         for j in range(0,len(dataType_srv_req[i])):
@@ -617,6 +632,8 @@ def setup_srv_protocol():
                         tempdatagrab.append(0.0)
                     elif(dataType[i][j]=="bool"):
                         tempdatagrab.append(False)
+                    elif(dataType[i][j]=="xxicro_Empty"):
+                        tempdatagrab.append("xxicro_Empty")
                     else:
                         tempdatagrab.append(0) 
 
@@ -634,6 +651,7 @@ def setup_srv_protocol():
                 datatypeProtocol_srv_res.append(tempdataprotocol)
                 bytetograb_srv_res.append(tempbytetograb)
                 datagrab_srv_res.append(tempdatagrab)
+    # print(Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res)
     return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut
 
 
@@ -658,11 +676,11 @@ def gennerate():
     callback=[]
     for line in fr:
         c=c+1
-        if(c==158):
+        if(c==407):
             callback=genSub(fw,nameofTopic,interfacefile)
-        elif(c==406):
+        elif(c==410):
             gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata)
-        elif(c==76):
+        elif(c==79):
             fw.write("\r\rdef setup_var_protocol():\r\r")
             Idmsgg,nametopicc,interfacetopicc,dataTypee,dataNamee,datagrabb,NofDataa,datatypeProtocoll,bytetograbb=setup_var_protocol()
             cal(get_params("Baudrate"),bytetograbb,NofDataa,nametopicc)
@@ -672,14 +690,14 @@ def gennerate():
             fw.write("\r\rdef setup_srv_protocol():\r\r")
             fw.write("    return "+str(Idsrv)+","+str(namesrv)+","+str(interfacesrv)+","+str(dataType_srv_req)+","+str(dataName_srv_req)+","+str(datagrab_srv_req)+","+str(NofData_srv_req)+","+str(datatypeProtocol_srv_req)+","+str(bytetograb_srv_req)+","+str(dataType_srv_res)+","+str(dataName_srv_res)+","+str(datagrab_srv_res)+","+str(NofData_srv_res)+","+str(datatypeProtocol_srv_res)+","+str(bytetograb_srv_res)+","+str(timeOut))
             fw.write("\r\r")
-        elif(c==452):
+        elif(c==458):
             fw.write("    Idmcu = "+str(id_mcu)+"\n")
         elif(c==10):
             fw.write("# gen Import interfaces\r")
             genImport(fw)
-        elif(c==869):
+        elif(c==872):
             fw.write("        self.Idmcu = "+str(id_mcu)+"\n")
-        elif(c==856):
+        elif(c==846):
             fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
         else:
             fw.write(line)
