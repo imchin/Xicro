@@ -164,9 +164,10 @@ def setupvarforcreatelibPub():
             dataType.append(tempType)
             dataName.append(tempName)
             interfacein.append(tempinterfacein)
+        # print(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData)
         for i in range(0,10):
             id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData,interfacein=expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData,interfacein)
-        
+        # print(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData)
 
     except:
         print("Error setup variable.")
@@ -280,15 +281,15 @@ def exStruct(st,anI,datatype,Nofdata):
     # q=0
     while(len(anI[0])>0):
        
-        # print("\n\n\n\nOn:",anI,"\n\n\n\n")
+        # print("\n\n\n\nOn:",anI,len(anI),"\n\n\n\n")
         maxlen=len(anI[0])
         #select struct name 
-        if(len(anI[1])>= 2 and anI[0][len(anI[0])-1]==anI[1][len(anI[1])-1]):
+        if(len(anI)>1 and len(anI[1])>= 2 and anI[0][len(anI[0])-1]==anI[1][len(anI[1])-1]):
             structName=anI[0][len(anI[0])-2]
             # print("case struct only close\n")
             # print("structnameOn :",structName,"\n\n")
             st=structOnly_close(st,anI,structName)
-        elif(anI[0][len(anI[0])-1]!=anI[1][len(anI[1])-1] and  anI[0][maxlen-2]==anI[1][maxlen-2] and len(anI[0])!= len(anI[1])):  #maxlen=len(anI[0])
+        elif(len(anI)>1 and anI[0][len(anI[0])-1]!=anI[1][len(anI[1])-1] and  anI[0][maxlen-2]==anI[1][maxlen-2] and len(anI[0])!= len(anI[1])):  #maxlen=len(anI[0])
             structName=anI[0][len(anI[0])-2]
             # print("case normal close struct\n")
             # print("structnameOn :",structName,"\n\n")
@@ -306,15 +307,16 @@ def exStruct(st,anI,datatype,Nofdata):
     return st
 def funS(e):
   return len(e)
-def create_hstruct(fw):
-    id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData=setupvarforcreatelibSub()
+def create_hstruct_pub(fw):
+    id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData=setupvarforcreatelibPub()
     public_struct=[]
-    fw.write("\r\r\r        // gen\r")
+    fw.write("\r\r\r        // gen pub struct\r")
     for i in range (0,len(dataType)):
         nn=[] #name
         ss=[] # list sub in sub
         NN=[] #N of data 
         q="        struct{\r"
+        q=q+"            struct{\r"
         for j in range (0,len(dataType[i])):
             if(dataName[i][j].find("__of__")==-1):  # normal struct
                 if(NofData[i][j]==1):
@@ -363,7 +365,73 @@ def create_hstruct(fw):
             st=""
             st=exStruct(st,an[k],nn,NN) # st ,an[k] , Type, Nofdata
             q=q+st
-              
+        q=q+"            } message; \r"
+        q=q+"        } Publisher_"+nameofTopic[i]+";\r\r"
+        public_struct.append(q)
+        fw.write(q)
+   
+    return public_struct
+
+    
+def create_hstruct(fw):
+    id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData=setupvarforcreatelibSub()
+    public_struct=[]
+    fw.write("\r\r\r        // gen Sub struct\r")
+    for i in range (0,len(dataType)):
+        nn=[] #name
+        ss=[] # list sub in sub
+        NN=[] #N of data 
+        q="        struct{\r"
+        q=q+"            struct{\r"
+        for j in range (0,len(dataType[i])):
+            if(dataName[i][j].find("__of__")==-1):  # normal struct
+                if(NofData[i][j]==1):
+                    if(convertdatatype(dataType[i][j])!="String" and convertdatatype(dataType[i][j])!="std::string"):
+                        q=q+"            "+convertdatatype(dataType[i][j])+" "+dataName[i][j]+"= 0;\r"
+                    else:
+                        q=q+"            "+convertdatatype(dataType[i][j])+" "+dataName[i][j]+"= \"\";\r"
+                else:
+                    if(convertdatatype(dataType[i][j])!="String" and convertdatatype(dataType[i][j])!="std::string"):
+                        q=q+"            "+convertdatatype(dataType[i][j])+" "+dataName[i][j]+"["+str(NofData[i][j])+"]={0};\r"
+                    else:
+                        q=q+"            "+convertdatatype(dataType[i][j])+" "+dataName[i][j]+"["+str(NofData[i][j])+"]={"
+                        for k in range(0,NofData[i][j]-1):
+                            q=q+"\"\","
+                        q=q+"\"\"};\r"
+            else:
+                ss.append(dataName[i][j].split("__of__")   )    
+                NN.append(NofData[i][j])
+                nn.append(dataType[i][j])
+                  
+        # print("ssssssss",ss)
+        # print("nnnnnnn",nn)
+
+        an=[]
+        for k in range(0,len(ss)):
+            w=[]
+            for j in range(0,len(ss)):
+                if(ss[k][0]==ss[j][0]):
+                    w.append(ss[j])
+            an.append(w)
+        an.append(["append"])
+        we=[]
+        for k in range(0,len(an)-1):
+            if(an[k]!=an[k+1]):
+                we.append(an[k])
+        an=we.copy()
+
+      
+        # for ii in range(0,len(an)):
+        #     print("\n\n\n")
+        #     print("------------------------------------------")
+        #     print(an[ii])
+        #     print("------------------------------------------")
+        #     print("\n\n\n")
+        for k in range(0,len(an)):
+            st=""
+            st=exStruct(st,an[k],nn,NN) # st ,an[k] , Type, Nofdata
+            q=q+st
+        q=q+"            } message; \r"
         q=q+"        } Sub_"+nameofTopic[i]+";\r\r"
         public_struct.append(q)
         fw.write(q)
@@ -777,6 +845,7 @@ def create_hFile(listVoid,Idmcu,listVoid_client_req):
                         fw.write(listVoid[i])
                         fw.write("\n")
                     print("gen voidPub Done")
+                    create_hstruct_pub(fw)
                     public_struct=create_hstruct(fw)
                     print("gen public_struct Done")
                     genstate_srv(fw)
@@ -829,11 +898,11 @@ def genPointer(fw):
         for j in range(0,len(dataName[i])):
             for k in range(0,Nofdata[i][j]):
                 if(Nofdata[i][j]==1):
-                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Sub_"+nameofTopic[i]+"."+dataName[i][j]+";\r"
-                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Sub_"+nameofTopic[i]+"."+dataName[i][j]+";\r"
+                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Sub_"+nameofTopic[i]+".message"+"."+dataName[i][j]+";\r"
+                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Sub_"+nameofTopic[i]+".message"+"."+dataName[i][j]+";\r"
                 else:
-                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Sub_"+nameofTopic[i]+"."+dataName[i][j]+"["+str(k) +"];\r"
-                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Sub_"+nameofTopic[i]+"."+dataName[i][j]+"["+str(k) +"];\r"
+                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Sub_"+nameofTopic[i]+".message""."+dataName[i][j]+"["+str(k) +"];\r"
+                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Sub_"+nameofTopic[i]+".message""."+dataName[i][j]+"["+str(k) +"];\r"
     q=q+"\r\r"
     q=q+w
     fw.write(q)
@@ -881,6 +950,7 @@ def create_cppFile(listVoid,id_mcu,id_topic,dataType,dataName,Nofdata,listVoid_c
             c=c+1
             if(c==388): 
                 try:
+                    p,p,nameofTopic,p,p,p,p=setupvarforcreatelibPub()
                     fw.write("\r\r\r// gen publish void\r")
                     for i in range(0,len(listVoid)):
                         # print(listVoid[i][8:12])
@@ -892,7 +962,7 @@ def create_cppFile(listVoid,id_mcu,id_topic,dataType,dataName,Nofdata,listVoid_c
                         fw.write("    _SendIdTopic("+str(id_topic[i])+");\n")
                         for j in range(0,len(dataType[i])):
                             cond=j<len(dataType[i])-1 #check flag continue or stop
-                            fw.write(typetoVoid(dataType[i][j],dataName[i][j],Nofdata[i][j],cond))
+                            fw.write(typetoVoid(dataType[i][j],dataName[i][j],Nofdata[i][j],cond,"Publisher_"+nameofTopic[i]+".message"))
                             if(dataType[i][j]=="bool" and Nofdata[i][j]==1 ):
                                 fw.write("// auto by 1 bool\n")
                             elif(cond):
@@ -943,7 +1013,13 @@ def convertdatatype(strr):
 
 
     
-def typetoVoid(typee,namee,Nofdata,cond):
+def typetoVoid(typee,namee,Nofdata,cond,nameString):
+    namee=nameString+"."+namee
+    # for i in range(0,10): # bias __of__ to .
+    #     if(namee.find("__of__")==-1):
+    #         break
+    #     else:
+    namee=namee.replace("__of__",".")
     if(typee.find("[")!=-1):
         typee=typee[0:typee.find("[")]
     if(typee=="uint8"and Nofdata==1):
@@ -1007,13 +1083,13 @@ def strVoid(nameofTopic,dataType,dataName,Nofdata):
     for i in range(0,len(nameofTopic)):
         t="        "
         t=t+"void publish_"+nameofTopic[i]+"("
-        for j in range(0,len(dataType[i])):
-            t=t+convertdatatype(dataType[i][j])+" "
-            if(Nofdata[i][j]!=1):
-                t=t+"*"
-            t=t+dataName[i][j]+" "
-            if(j>=0 and j<len(dataType[i])-1):
-                t=t+","
+        # for j in range(0,len(dataType[i])):
+        #     t=t+convertdatatype(dataType[i][j])+" "
+        #     if(Nofdata[i][j]!=1):
+        #         t=t+"*"
+        #     t=t+dataName[i][j]+" "
+        #     if(j>=0 and j<len(dataType[i])-1):
+        #         t=t+","
         t=t+");"
         temp.append(t)
     # print(temp)

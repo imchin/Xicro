@@ -1,9 +1,9 @@
 Idmcu: 3
-Namespace: "read_imu"
+Namespace: "demo"
 Port: "/dev/ttyACM0"
 generate_library_Path: "arduino/libraries"
 Baudrate: 57600
-Setup_Publisher:  [         [1,"Imu_arduino","sensor_msgs/Imu.msg"]         ]
-Setup_Subscriber: [         ]
+Setup_Publisher:  [         [1,"imu_arduino","interactive_arduino/Imu6DOF.msg"],[2,"input_arduino","interactive_arduino/DemoShieldInput.msg"]        ]
+Setup_Subscriber: [         [1,"input_arduino","interactive_arduino/DemoShieldOutput.msg"]   ]
 Setup_Srv_client: [         ]
 

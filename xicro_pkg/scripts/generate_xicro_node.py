@@ -269,13 +269,13 @@ def cal(baud_rate,byteGrab,Nofdata,NameToppic):
     bytePerS=baud_rate/10.00
     Sumbyte=0
     for i in range(0,len(byteGrab)):
-        byte_T= 4 + 1 + 1 # start + sign + id 
+        byte_T= 4 + 1 + 1 # start + sign + id
         for j in range(0,len(byteGrab[i])):
             byte_T=byte_T + 1 # bit data type
             if(byteGrab[i][j]==888): # string
                 byte_T=byte_T+1+2   #asumtion 1 char and stop string 2 byte
                 
-            elif(byteGrab[i][j]==88): # bool
+            elif(byteGrab[i][j]==999): # bool
                 if(ceil(Nofdata[i][j]/8.00)>1):
                     byte_T=byte_T + ceil(Nofdata[i][j]/8.00) 
                 else:
