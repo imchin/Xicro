@@ -3,17 +3,13 @@ import rclpy
 from rclpy.node import Node
 import tkinter as tk
 from tkinter import *
-from tkinter import messagebox
 import sys
-import threading
-from xicro_interfaces.msg import DemoInput,DemoOutput
-from std_msgs.msg import UInt8
+from interactive_arduino.msg import DemoShieldOutput,DemoShieldInput
 class GUI(Node):
     def __init__(self):
         super().__init__('gui')
-        self.publisher_ = self.create_publisher(DemoOutput,'DemoOutput',10)
-        self.publisher_2 = self.create_publisher(UInt8,'DemoOutput2',10)
-        self.subscriber_button = self.create_subscription(DemoInput,'DemoInput',self.demoinput_callback,10)
+        self.publisher_ = self.create_publisher(DemoShieldOutput,'output_arduino',10)
+        self.subscriber_button = self.create_subscription( DemoShieldInput,'input_arduino',self.demoinput_callback,10)
         timer_period = 0.05
         self.timer = self.create_timer(timer_period,self.timer_callback)
         
@@ -36,7 +32,7 @@ class GUI(Node):
         self.l4_open=0
         self.buzzer_val = 0
         self.servo_val = 0
-        self.d1,self.d2,self.d3,self.d4 = False,False,False,False
+        self.d1,self.d2,self.d3 = False,False,False
         self.bool = [False,False,False]
 
         self.preS =[False,False,False]
@@ -45,14 +41,14 @@ class GUI(Node):
         LED1=Button(self.root, text="LED1",bg='bisque4',fg='white',command=self.s1_click,height= 5, width=10).place(x=self.w/60 +75 ,y=self.h/13)
         LED2=Button(self.root, text="LED2",bg='salmon3',fg='white',command=self.s2_click,height= 5, width=10).place(x=self.w/60 +75 ,y=self.h/13 +150)
         LED3=Button(self.root, text="LED3",bg='RosyBrown3',fg='white',command=self.s3_click,height= 5, width=10).place(x=self.w/60 +75 ,y=self.h/13 +150 +150)
-        LED4=Button(self.root, text="LED4",bg='DarkSlateGray4',fg='white',command=self.s4_click,height= 5, width=10).place(x=self.w/60 +75 ,y=self.h/13 +150 +150+150)
+        # LED4=Button(self.root, text="LED4",bg='DarkSlateGray4',fg='white',command=self.s4_click,height= 5, width=10).place(x=self.w/60 +75 ,y=self.h/13 +150 +150+150)
         Buzzer_slider = Scale(self.root, from_=0, to=255, orient=VERTICAL,length=580,tickinterval=15,variable=self.current_buzzer,command=self.get_buzzer_value).place(x=self.w/3.5 ,y=self.h/13 )
 
-        Servo_slider = Scale(self.root, from_=0, to=180, orient=VERTICAL,length=500,tickinterval=10,variable=self.current_servo,command=self.get_servo_value).place(x=self.w/3.5 + 300 ,y=self.h/13 )
+        # Servo_slider = Scale(self.root, from_=0, to=180, orient=VERTICAL,length=500,tickinterval=10,variable=self.current_servo,command=self.get_servo_value).place(x=self.w/3.5 + 300 ,y=self.h/13 )
 
 
         Label(text ="BUZZER",fg="black",font=self.TFont).place(x=self.w/3.5,y=self.h/13 +150 +150+150 +80+70)
-        Label(text ="SERVO",fg="black",font=self.TFont).place(x=self.w/3.5+300,y=self.h/13 +150 +150+150 +80)
+        # Label(text ="SERVO",fg="black",font=self.TFont).place(x=self.w/3.5+300,y=self.h/13 +150 +150+150 +80)
         # Label(text=,fg="black",font=self.TFont3).place(x=self.w/1.2,y=self.h/13 +150)
         Label(text =" Press S1 to +1\n Press S2 to -1\n   Press S3 to reset",fg="black",font=self.TFont).place(x=self.w/1.3,y=self.h/13 +150 +150)      
 
@@ -152,20 +148,18 @@ class GUI(Node):
         return self.servo_val
     
     def demoinput_callback(self,msg):
-        
-        self.bool = msg.buttonstate
+        self.bool = msg.button.states
         
         # return 1
 
     
     def timer_callback(self):
-        msg = DemoOutput()
+        msg = DemoShieldOutput()
         a = self.counter_value(self.bool[0],self.bool[1],self.bool[2])
         Label(text=str(a),fg="black",font=self.TFont3).place(x=self.w/1.2,y=self.h/13 +150)
         # print(a)
-        msg.buzzer = self.buzzer_val
-        msg.servo = self.servo_val
-        msg.led = [self.d1,self.d2,self.d3,self.d4]
+        msg.buzzer.value=self.buzzer_val
+        msg.led_array.states= [self.d1,self.d2,self.d3]
         self.publisher_.publish(msg)
         self.root.update()
         # msg2 = UInt8()
