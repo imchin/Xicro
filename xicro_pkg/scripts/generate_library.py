@@ -432,7 +432,7 @@ def create_hstruct(fw):
             st=exStruct(st,an[k],nn,NN) # st ,an[k] , Type, Nofdata
             q=q+st
         q=q+"            } message; \r"
-        q=q+"        } Sub_"+nameofTopic[i]+";\r\r"
+        q=q+"        } Subscription_"+nameofTopic[i]+";\r\r"
         public_struct.append(q)
         fw.write(q)
    
