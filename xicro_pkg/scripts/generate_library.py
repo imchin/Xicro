@@ -898,11 +898,11 @@ def genPointer(fw):
         for j in range(0,len(dataName[i])):
             for k in range(0,Nofdata[i][j]):
                 if(Nofdata[i][j]==1):
-                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Sub_"+nameofTopic[i]+".message"+"."+dataName[i][j]+";\r"
-                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Sub_"+nameofTopic[i]+".message"+"."+dataName[i][j]+";\r"
+                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Subscription_"+nameofTopic[i]+".message"+"."+dataName[i][j]+";\r"
+                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Subscription_"+nameofTopic[i]+".message"+"."+dataName[i][j]+";\r"
                 else:
-                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Sub_"+nameofTopic[i]+".message""."+dataName[i][j]+"["+str(k) +"];\r"
-                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Sub_"+nameofTopic[i]+".message""."+dataName[i][j]+"["+str(k) +"];\r"
+                    q=q+"    _nonverify["+str(i)+"]["+str(j)+"]["+ str(k) +"]=&_Subscription_"+nameofTopic[i]+".message""."+dataName[i][j]+"["+str(k) +"];\r"
+                    w=w+"    _verify["+str(i)+"]["+str(j)+"]["+str(k) +"]=&Subscription_"+nameofTopic[i]+".message""."+dataName[i][j]+"["+str(k) +"];\r"
     q=q+"\r\r"
     q=q+w
     fw.write(q)
