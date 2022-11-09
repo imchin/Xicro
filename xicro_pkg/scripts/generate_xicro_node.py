@@ -9,7 +9,7 @@ def gPath(q): # q=1 is install config q=0 is ws/ src pkg
         w=os.popen("ros2 pkg prefix xicro_pkg").read()
         w=w[0:len(w)-1]
         return w+'/share'+'/xicro_pkg'+'/config'
-    else:   
+    else:
         w=os.popen(     "ros2 pkg prefix xicro_pkg").read()
         w=w[0:w.find("/install")]+"/src/Xicro/xicro_pkg"
         return w
@@ -53,7 +53,7 @@ def typetoProtocol(typee,Nofdata):
         Nofbyte=4
     elif(typee=="float64" ):
         ans= 222
-        Nofbyte=8   
+        Nofbyte=8
     elif(typee=="string" ):
         ans= 242
         Nofbyte=888
@@ -62,7 +62,7 @@ def typetoProtocol(typee,Nofdata):
         Nofbyte=1
     elif(typee=="xxicro_Empty" ):
         ans= 254
-        Nofbyte=1   
+        Nofbyte=1
     if(Nofdata==1):
         return ans,Nofbyte
     elif(typee=="bool" ):
@@ -72,7 +72,7 @@ def typetoProtocol(typee,Nofdata):
 
 def get_params(q):
     try:
-       
+
         path = os.path.join(gPath(1), 'setup_xicro.yaml')
         with open(path,'r') as f:
             yml_dict = yaml.safe_load(f)
@@ -107,11 +107,11 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
     # print("\n\n\n\ninterfacefileIn :",interfacein)
     for i in range(0,len(dataType)):
         for j in range(0,len(dataType[i])):
-            if(checkSubmsg(dataType[i][j]) == 0):   
+            if(checkSubmsg(dataType[i][j]) == 0):
                 # print("On : ",dataType[i][j])
                 if(dataType[i][j].find("/")!=-1):
-                    path = os.path.join(get_package_share_directory(dataType[i][j].split("/")[0]),'msg', dataType[i][j].split("/")[1]+".msg")  
-                    Op = dataType[i][j].split("/")[0]         
+                    path = os.path.join(get_package_share_directory(dataType[i][j].split("/")[0]),'msg', dataType[i][j].split("/")[1]+".msg")
+                    Op = dataType[i][j].split("/")[0]
                 else:
                     path = os.path.join(get_package_share_directory(interfacein[i][j].split("/")[0]),'msg', dataType[i][j]+".msg")
                     Op = interfacein[i][j]
@@ -127,12 +127,12 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
                         addName.append(line[1])
                         addinterfacein.append(Op)
                 for k in range(0,len(addName)):
-                    addName[k]=Sname+"."+addName[k]     
+                    addName[k]=Sname+"."+addName[k]
                 interfacein[i][j]=addinterfacein
                 dataType[i][j]=addtype
                 dataName[i][j]=addName
                 # print(addtype,addName,addinterfacein)
-            
+
     TempType=[]
     TempName=[]
     Tempinterfaein=[]
@@ -168,7 +168,7 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
     #     q=[]
     #     for j in range(0,len(dataName[i])):
     #         dataName[i][j]=dataName[i][j].replace(".","__of__")
-    
+
     # print("Datatype :",dataType)
     # print("DataName :",dataName)
     # print("Nofdata :",NofData)
@@ -211,7 +211,7 @@ def setup_var_protocol():
     # print(Idmsg,nametopic,interfacetopic,dataType,dataName,datagrab,NofData,datatypeProtocol,bytetograb)
     print('Generate variable from msg Done.')
 
-    
+
     # return 0,0,0,0,0,0,0,0,0
     for i in range(0,10):
             Idmsg,id_topic,nametopic,interfacetopic,dataType,dataName,NofData,interfacein=expandSub(Idmsg,[],nametopic,interfacetopic,dataType,dataName,NofData,interfacein)
@@ -219,8 +219,8 @@ def setup_var_protocol():
         for j in range(0,len(dataType[i])):
             if(dataType[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
                 dataType[i][j]="float32"
-                
-    # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
+
+    # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index
     for i in range(0,len(dataType)):
         tempbytetograb=[]
         tempdataprotocol=[]
@@ -235,7 +235,7 @@ def setup_var_protocol():
                     elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
                         tt.append(0.0)
                     elif(dataType[i][j].split("[")[0]=="bool"):
-                        tt.append(False)   
+                        tt.append(False)
                     else:
                         tt.append(0)
                 tempdatagrab.append(tt)
@@ -247,14 +247,14 @@ def setup_var_protocol():
                 elif(dataType[i][j]=="bool"):
                     tempdatagrab.append(False)
                 else:
-                    tempdatagrab.append(0) 
+                    tempdatagrab.append(0)
 
             if(dataType[i][j].find("[")!=-1 ):
                 dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
             a,b=typetoProtocol(dataType[i][j],NofData[i][j])
             tempdataprotocol.append(a)
             tempbytetograb.append(b)
-           
+
 
         datatypeProtocol.append(tempdataprotocol)
         bytetograb.append(tempbytetograb)
@@ -274,16 +274,16 @@ def cal(baud_rate,byteGrab,Nofdata,NameToppic):
             byte_T=byte_T + 1 # bit data type
             if(byteGrab[i][j]==888): # string
                 byte_T=byte_T+1+2   #asumtion 1 char and stop string 2 byte
-                
+
             elif(byteGrab[i][j]==999): # bool
                 if(ceil(Nofdata[i][j]/8.00)>1):
-                    byte_T=byte_T + ceil(Nofdata[i][j]/8.00) 
+                    byte_T=byte_T + ceil(Nofdata[i][j]/8.00)
                 else:
                     byte_T=byte_T + 0   #1 bool is auto continue or auto stop
             else: #normal var
                 byte_T=byte_T+( byteGrab[i][j]*Nofdata[i][j])
-            if(Nofdata[i][j]>1):  
-                byte_T=byte_T+1 # Bit show Nofdata  
+            if(Nofdata[i][j]>1):
+                byte_T=byte_T+1 # Bit show Nofdata
 
         byte_T=byte_T + ((len(byteGrab[i])-1)*2)  + 2 + 1  #  continue + stop + Crc
         print("Topic >>> ",NameToppic[i] , "Use : " ,byte_T ,"bytes")
@@ -292,10 +292,10 @@ def cal(baud_rate,byteGrab,Nofdata,NameToppic):
         Sumbyte=Sumbyte+byte_T
 
     print("All topic average is : ",bytePerS/Sumbyte," Hz.")
-    
+
 
     return 0
-    
+
 def checkNofdata(dataType):
     S=dataType.find("[")
     F= dataType.find("]")
@@ -370,18 +370,18 @@ def getafterdot(q):
 def genSub(fw,nameofTopic,interfacefile):
     try:
         callback=[]
-        fw.write("\r\r        #gen\r")
+        fw.write("\n\n        #gen\n")
         for i in range (0,len(nameofTopic)):
             q="        self.subscription_"
             q=q+nameofTopic[i]
             w=" = self.create_subscription("
-            w=w+getbeforedot(interfacefile[i].split("/")[1])+",'"+nameofTopic[i]+"'," 
+            w=w+getbeforedot(interfacefile[i].split("/")[1])+",'"+nameofTopic[i]+"',"
             e="self.callback_"+nameofTopic[i]
             w=w+e+",10)"
             callback.append(e)
-            fw.write(q+w+"\r")
-            fw.write("        "+e+"\r")
-        fw.write("\r\r\r\r")
+            fw.write(q+w+"\n")
+            fw.write("        "+e+"\n")
+        fw.write("\n\n\n\n")
         print("gennerate Sub Done.")
     except:
         print("gennerate Sub Fail.")
@@ -390,7 +390,7 @@ def genSub(fw,nameofTopic,interfacefile):
 def typetofunc(typee,namee,Nofdata,cond):
     if(typee.find("[")!=-1):
         typee=typee[0:typee.find("[")]
-    # print(Nofdata,typee)    
+    # print(Nofdata,typee)
     try:
         if(typee=="uint8"):
             return  "        self.xicro_instruction._SendUint8(msg."+namee+","+str(Nofdata)+ ")\n"
@@ -407,9 +407,9 @@ def typetofunc(typee,namee,Nofdata,cond):
         elif(typee=="int32"):
             return  "        self.xicro_instruction._SendInt32(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="int64"):
-            return  "        self.xicro_instruction._SendInt64(msg."+namee+","+str(Nofdata)+ ")\n"  
+            return  "        self.xicro_instruction._SendInt64(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="float32"):
-            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"  
+            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="string"):
             return  "        self.xicro_instruction._SendString(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="bool" and Nofdata==1):
@@ -417,7 +417,7 @@ def typetofunc(typee,namee,Nofdata,cond):
         elif(typee=="bool" and Nofdata!=1):
             return  "        self.xicro_instruction._SendBool(msg."+namee+","+str(Nofdata)+","+str(cond)+ ")\n"
         elif(typee=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
-            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"    
+            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="float64"):
             return  "        self.xicro_instruction._SendFloat64(msg."+namee+","+str(Nofdata)+ ")\n"
         else:
@@ -445,7 +445,7 @@ def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
                     fw.write("        self.xicro_instruction._SendContinue()\r")
                 else:
                     fw.write("        self.xicro_instruction._SendStop()\r")
-                    
+
             fw.write("        self.xicro_instruction._SendCRC()\r")
             fw.write("        self.xicro_instruction._To_Send()\r")
             fw.write("\r        return 1\r\r\r\r")
@@ -456,15 +456,15 @@ def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
     return 0
 def genImport(fw):
     try:
-        fw.write("\r# gen import msg\r")
+        fw.write("\n# gen import msg\n")
         interfacemsg=[]
         Setup_Sub=get_params("Setup_Subscriber")
         for i in range(0,len(Setup_Sub)):
             interfacemsg.append(Setup_Sub[i][2])
         Setup_Pub=get_params("Setup_Publisher")
         for i in range(0,len(Setup_Pub)):
-            interfacemsg.append(Setup_Pub[i][2])  
-            
+            interfacemsg.append(Setup_Pub[i][2])
+
         # print("interfacemsg",interfacemsg)
         tt=[]
         for i in range(0,len(interfacemsg)):
@@ -476,13 +476,13 @@ def genImport(fw):
                 tt.append(interfacemsg[i])
         interfacemsg=tt.copy()
         for i in range(0,len(interfacemsg)):
-            fw.write("from "+interfacemsg[i].split("/")[0]+".msg import "+interfacemsg[i].split("/")[1].split(".")[0] + "\r")
-        fw.write("\r\r# gen import srv\r")
+            fw.write("from "+interfacemsg[i].split("/")[0]+".msg import "+interfacemsg[i].split("/")[1].split(".")[0] + "\n")
+        fw.write("\n\n# gen import srv\n")
 
         interfacesrv=[]
         Setup_Srv=get_params("Setup_Srv_client")
         for i in range(0,len(Setup_Srv)):
-            interfacesrv.append(Setup_Srv[i][2])  
+            interfacesrv.append(Setup_Srv[i][2])
         tt=[]
         for i in range(0,len(interfacesrv)):
             s=0
@@ -532,7 +532,7 @@ def setup_srv_protocol():
     bytetograb_srv_res=[]
     interfacein_srv_req=[]
     interfacein_srv_res=[]
-    for i in range (0,len(interfacesrv)):  
+    for i in range (0,len(interfacesrv)):
         flagP=0
         tempType_req=[]
         tempName_req=[]
@@ -599,7 +599,7 @@ def setup_srv_protocol():
             if(dataType_srv_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
                 dataType_srv_res[i][j]="float32"
 
-    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
+    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index
     for p in range(0,2):
         if(p==0):
             dataType=dataType_srv_req
@@ -621,7 +621,7 @@ def setup_srv_protocol():
                         elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
                             tt.append(0.0)
                         elif(dataType[i][j].split("[")[0]=="bool"):
-                            tt.append(False)   
+                            tt.append(False)
                         else:
                             tt.append(0)
                     tempdatagrab.append(tt)
@@ -635,14 +635,14 @@ def setup_srv_protocol():
                     elif(dataType[i][j]=="xxicro_Empty"):
                         tempdatagrab.append("xxicro_Empty")
                     else:
-                        tempdatagrab.append(0) 
+                        tempdatagrab.append(0)
 
                 if(dataType[i][j].find("[")!=-1 ):
                     dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
                 a,b=typetoProtocol(dataType[i][j],NofData[i][j])
                 tempdataprotocol.append(a)
                 tempbytetograb.append(b)
-            
+
             if(p==0):
                 datatypeProtocol_srv_req.append(tempdataprotocol)
                 bytetograb_srv_req.append(tempbytetograb)
@@ -655,23 +655,23 @@ def setup_srv_protocol():
     return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut
 
 
-def gennerate(): 
-    
+def gennerate():
+
     id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,Nofdata=setupvarforcreatelib()
     # print(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,Nofdata)
     pathr= os.path.join(gPath(1)+'/.Xicro_node_preSetup.txt')
-    
+
     pathw= os.path.join(gPath(0)+ '/scripts/xicro_node_'+get_params("Namespace")+"_ID_"+str(id_mcu)+'_'+sys.argv[1]+'.py')
-    os.popen("code " + pathw)
+    # os.popen("vim " + pathw)
 
     # print(gPath(0)+ '/scripts/xicro_node_'+get_params("Namespace")+"_ID_"+str(id_mcu)+'.py')
-    fr=open(pathr, 'r') 
-    fw=open(pathw, 'w') 
-    fw.write("#!/usr/bin/python3\r\r\r\r")
-    fw.write("# ***************************************************************************************************************************************************\r")
-    fw.write("#      |          This script was auto-generated by generate_Xicro_node.py which received parameters from setup_xicro.yaml                    |\r")
-    fw.write("#      |                                         EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                                 |\r")
-    fw.write("# ***************************************************************************************************************************************************\r\r")
+    fr=open(pathr, 'r')
+    fw=open(pathw, 'w')
+    fw.write("#!/usr/bin/python3\n\n\n\n")
+    fw.write("# ***************************************************************************************************************************************************\n")
+    fw.write("#      |          This script was auto-generated by generate_Xicro_node.py which received parameters from setup_xicro.yaml                    |\n")
+    fw.write("#      |                                         EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                                 |\n")
+    fw.write("# ***************************************************************************************************************************************************\n\n")
     c=0
     callback=[]
     for line in fr:
@@ -693,23 +693,23 @@ def gennerate():
         elif(c==458):
             fw.write("    Idmcu = "+str(id_mcu)+"\n")
         elif(c==10):
-            fw.write("# gen Import interfaces\r")
+            fw.write("# gen Import interfaces\n")
             genImport(fw)
         elif(c==872):
             fw.write("        self.Idmcu = "+str(id_mcu)+"\n")
         elif(c==846):
-            fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
+            fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")
         else:
             fw.write(line)
     return 1
 def addentrypoint():
     pathr= os.path.join(gPath(0), 'CMakeLists.txt')
-    f=open(pathr, 'r+') 
+    f=open(pathr, 'r+')
     entryp=[]
-   
+
     for line in f:
         entryp.append(line)
-    
+
 
 
     entrystring="  scripts/"+"xicro_node_"+get_params("Namespace")+"_ID_"+str(get_params("Idmcu"))+'_'+sys.argv[1]+'.py\n'
@@ -730,7 +730,7 @@ def addentrypoint():
 
     return 1
 
-        
+
 def main():
     flagargs=0
     try:
