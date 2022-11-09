@@ -42,18 +42,18 @@ void loop() {
 }
 
 void buzzer_update(){
-    if(xicro.Sub_output_arduino.message.buzzer.value==0){
+    if(xicro.Subscription_output_arduino.message.buzzer.value==0){
       digitalWrite(3,1);
     }else{
-      analogWrite(3,(uint8_t)~( xicro.Sub_output_arduino.message.buzzer.value));
+      analogWrite(3,(uint8_t)~( xicro.Subscription_output_arduino.message.buzzer.value));
     }
     
 }
 void led_update(){
  
-    digitalWrite(13,!xicro.Sub_output_arduino.message.led_array.states[0]);
-    digitalWrite(12,!xicro.Sub_output_arduino.message.led_array.states[1]);
-    digitalWrite(11,!xicro.Sub_output_arduino.message.led_array.states[2]);
+    digitalWrite(13,!xicro.Subscription_output_arduino.message.led_array.states[0]);
+    digitalWrite(12,!xicro.Subscription_output_arduino.message.led_array.states[1]);
+    digitalWrite(11,!xicro.Subscription_output_arduino.message.led_array.states[2]);
   
 }
 
