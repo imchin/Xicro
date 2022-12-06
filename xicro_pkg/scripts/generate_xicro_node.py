@@ -9,7 +9,7 @@ def gPath(q): # q=1 is install config q=0 is ws/ src pkg
         w=os.popen("ros2 pkg prefix xicro_pkg").read()
         w=w[0:len(w)-1]
         return w+'/share'+'/xicro_pkg'+'/config'
-    else:
+    else:   
         w=os.popen(     "ros2 pkg prefix xicro_pkg").read()
         w=w[0:w.find("/install")]+"/src/Xicro/xicro_pkg"
         return w
@@ -53,7 +53,7 @@ def typetoProtocol(typee,Nofdata):
         Nofbyte=4
     elif(typee=="float64" ):
         ans= 222
-        Nofbyte=8
+        Nofbyte=8   
     elif(typee=="string" ):
         ans= 242
         Nofbyte=888
@@ -62,7 +62,7 @@ def typetoProtocol(typee,Nofdata):
         Nofbyte=1
     elif(typee=="xxicro_Empty" ):
         ans= 254
-        Nofbyte=1
+        Nofbyte=1   
     if(Nofdata==1):
         return ans,Nofbyte
     elif(typee=="bool" ):
@@ -72,7 +72,7 @@ def typetoProtocol(typee,Nofdata):
 
 def get_params(q):
     try:
-
+       
         path = os.path.join(gPath(1), 'setup_xicro.yaml')
         with open(path,'r') as f:
             yml_dict = yaml.safe_load(f)
@@ -107,11 +107,11 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
     # print("\n\n\n\ninterfacefileIn :",interfacein)
     for i in range(0,len(dataType)):
         for j in range(0,len(dataType[i])):
-            if(checkSubmsg(dataType[i][j]) == 0):
+            if(checkSubmsg(dataType[i][j]) == 0):   
                 # print("On : ",dataType[i][j])
                 if(dataType[i][j].find("/")!=-1):
-                    path = os.path.join(get_package_share_directory(dataType[i][j].split("/")[0]),'msg', dataType[i][j].split("/")[1]+".msg")
-                    Op = dataType[i][j].split("/")[0]
+                    path = os.path.join(get_package_share_directory(dataType[i][j].split("/")[0]),'msg', dataType[i][j].split("/")[1]+".msg")  
+                    Op = dataType[i][j].split("/")[0]         
                 else:
                     path = os.path.join(get_package_share_directory(interfacein[i][j].split("/")[0]),'msg', dataType[i][j]+".msg")
                     Op = interfacein[i][j]
@@ -127,12 +127,12 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
                         addName.append(line[1])
                         addinterfacein.append(Op)
                 for k in range(0,len(addName)):
-                    addName[k]=Sname+"."+addName[k]
+                    addName[k]=Sname+"."+addName[k]     
                 interfacein[i][j]=addinterfacein
                 dataType[i][j]=addtype
                 dataName[i][j]=addName
                 # print(addtype,addName,addinterfacein)
-
+            
     TempType=[]
     TempName=[]
     Tempinterfaein=[]
@@ -168,7 +168,7 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
     #     q=[]
     #     for j in range(0,len(dataName[i])):
     #         dataName[i][j]=dataName[i][j].replace(".","__of__")
-
+    
     # print("Datatype :",dataType)
     # print("DataName :",dataName)
     # print("Nofdata :",NofData)
@@ -211,7 +211,7 @@ def setup_var_protocol():
     # print(Idmsg,nametopic,interfacetopic,dataType,dataName,datagrab,NofData,datatypeProtocol,bytetograb)
     print('Generate variable from msg Done.')
 
-
+    
     # return 0,0,0,0,0,0,0,0,0
     for i in range(0,10):
             Idmsg,id_topic,nametopic,interfacetopic,dataType,dataName,NofData,interfacein=expandSub(Idmsg,[],nametopic,interfacetopic,dataType,dataName,NofData,interfacein)
@@ -219,8 +219,8 @@ def setup_var_protocol():
         for j in range(0,len(dataType[i])):
             if(dataType[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
                 dataType[i][j]="float32"
-
-    # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index
+                
+    # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
     for i in range(0,len(dataType)):
         tempbytetograb=[]
         tempdataprotocol=[]
@@ -235,7 +235,7 @@ def setup_var_protocol():
                     elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
                         tt.append(0.0)
                     elif(dataType[i][j].split("[")[0]=="bool"):
-                        tt.append(False)
+                        tt.append(False)   
                     else:
                         tt.append(0)
                 tempdatagrab.append(tt)
@@ -247,14 +247,14 @@ def setup_var_protocol():
                 elif(dataType[i][j]=="bool"):
                     tempdatagrab.append(False)
                 else:
-                    tempdatagrab.append(0)
+                    tempdatagrab.append(0) 
 
             if(dataType[i][j].find("[")!=-1 ):
                 dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
             a,b=typetoProtocol(dataType[i][j],NofData[i][j])
             tempdataprotocol.append(a)
             tempbytetograb.append(b)
-
+           
 
         datatypeProtocol.append(tempdataprotocol)
         bytetograb.append(tempbytetograb)
@@ -274,16 +274,16 @@ def cal(baud_rate,byteGrab,Nofdata,NameToppic):
             byte_T=byte_T + 1 # bit data type
             if(byteGrab[i][j]==888): # string
                 byte_T=byte_T+1+2   #asumtion 1 char and stop string 2 byte
-
+                
             elif(byteGrab[i][j]==999): # bool
                 if(ceil(Nofdata[i][j]/8.00)>1):
-                    byte_T=byte_T + ceil(Nofdata[i][j]/8.00)
+                    byte_T=byte_T + ceil(Nofdata[i][j]/8.00) 
                 else:
                     byte_T=byte_T + 0   #1 bool is auto continue or auto stop
             else: #normal var
                 byte_T=byte_T+( byteGrab[i][j]*Nofdata[i][j])
-            if(Nofdata[i][j]>1):
-                byte_T=byte_T+1 # Bit show Nofdata
+            if(Nofdata[i][j]>1):  
+                byte_T=byte_T+1 # Bit show Nofdata  
 
         byte_T=byte_T + ((len(byteGrab[i])-1)*2)  + 2 + 1  #  continue + stop + Crc
         print("Topic >>> ",NameToppic[i] , "Use : " ,byte_T ,"bytes")
@@ -292,10 +292,10 @@ def cal(baud_rate,byteGrab,Nofdata,NameToppic):
         Sumbyte=Sumbyte+byte_T
 
     print("All topic average is : ",bytePerS/Sumbyte," Hz.")
-
+    
 
     return 0
-
+    
 def checkNofdata(dataType):
     S=dataType.find("[")
     F= dataType.find("]")
@@ -370,27 +370,61 @@ def getafterdot(q):
 def genSub(fw,nameofTopic,interfacefile):
     try:
         callback=[]
-        fw.write("\n\n        #gen\n")
+        fw.write("\r\r        #gen\r")
         for i in range (0,len(nameofTopic)):
             q="        self.subscription_"
             q=q+nameofTopic[i]
             w=" = self.create_subscription("
-            w=w+getbeforedot(interfacefile[i].split("/")[1])+",'"+nameofTopic[i]+"',"
+            w=w+getbeforedot(interfacefile[i].split("/")[1])+",'"+nameofTopic[i]+"'," 
             e="self.callback_"+nameofTopic[i]
             w=w+e+",10)"
             callback.append(e)
-            fw.write(q+w+"\n")
-            fw.write("        "+e+"\n")
-        fw.write("\n\n\n\n")
+            fw.write(q+w+"\r")
+            fw.write("        "+e+"\r")
+        fw.write("\r\r\r\r")
         print("gennerate Sub Done.")
     except:
         print("gennerate Sub Fail.")
     return callback
 
+def genSrv_server(fw,namesrv,interfacefile,i):
+    try:
+        callback=""
+        q="        self.srv_server_"
+        q=q+namesrv[i]
+        w=" = self.create_service("
+        w=w+getbeforedot(interfacefile[i].split("/")[1])+",'"+namesrv[i]+"'," 
+        e="self.srv_server_callback_"+namesrv[i]
+        w=w+e+")"
+        callback=e
+        fw.write(q+w+"\r")
+            # fw.write("        "+e+"\r")
+        fw.write("\r\r\r\r")
+        print("gennerate Srv_server Done.")
+    except:
+        print("gennerate Srv_server Fail.")
+    return callback
+def genAction_server(fw,nameaction,interfacefile,i):
+    try:
+        callback=""
+        q="        self.action_server_"
+        q=q+nameaction[i]
+        w=" = ActionServer(self,"
+        w=w+getbeforedot(interfacefile[i].split("/")[1])+",'"+nameaction[i]+"'," 
+        e="self.action_server_callback_"+nameaction[i]
+        w=w+e+")"
+        callback=e
+        fw.write(q+w+"\r")
+            # fw.write("        "+e+"\r")
+        fw.write("\r\r\r\r")
+        print("gennerate Action_server Done.")
+    except:
+        print("gennerate Action_server Fail.")
+    return callback
 def typetofunc(typee,namee,Nofdata,cond):
     if(typee.find("[")!=-1):
         typee=typee[0:typee.find("[")]
-    # print(Nofdata,typee)
+    # print(Nofdata,typee)    
     try:
         if(typee=="uint8"):
             return  "        self.xicro_instruction._SendUint8(msg."+namee+","+str(Nofdata)+ ")\n"
@@ -407,9 +441,9 @@ def typetofunc(typee,namee,Nofdata,cond):
         elif(typee=="int32"):
             return  "        self.xicro_instruction._SendInt32(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="int64"):
-            return  "        self.xicro_instruction._SendInt64(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendInt64(msg."+namee+","+str(Nofdata)+ ")\n"  
         elif(typee=="float32"):
-            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"  
         elif(typee=="string"):
             return  "        self.xicro_instruction._SendString(msg."+namee+","+str(Nofdata)+ ")\n"
         elif(typee=="bool" and Nofdata==1):
@@ -417,7 +451,7 @@ def typetofunc(typee,namee,Nofdata,cond):
         elif(typee=="bool" and Nofdata!=1):
             return  "        self.xicro_instruction._SendBool(msg."+namee+","+str(Nofdata)+","+str(cond)+ ")\n"
         elif(typee=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
-            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"
+            return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"    
         elif(typee=="float64"):
             return  "        self.xicro_instruction._SendFloat64(msg."+namee+","+str(Nofdata)+ ")\n"
         else:
@@ -425,6 +459,45 @@ def typetofunc(typee,namee,Nofdata,cond):
             return "1"
     except:
         print("Format .msg wrong")
+    return "0"
+def typetofunc_strr(typee,namee,Nofdata,cond,strr):
+    if(typee.find("[")!=-1):
+        typee=typee[0:typee.find("[")]
+    # print(Nofdata,typee)    
+    try:
+        if(typee=="uint8"):
+            return  "        self.xicro_instruction._SendUint8("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="uint16"):
+            return  "        self.xicro_instruction._SendUint16("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="uint32"):
+            return  "        self.xicro_instruction._SendUint32("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="uint64"):
+            return  "        self.xicro_instruction._SendUint64("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="int8"):
+            return  "        self.xicro_instruction._SendInt8("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="int16"):
+            return  "        self.xicro_instruction._SendInt16("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="int32"):
+            return  "        self.xicro_instruction._SendInt32("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="int64"):
+            return  "        self.xicro_instruction._SendInt64("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="float32"):
+            return  "        self.xicro_instruction._SendFloat32("+strr+namee+","+str(Nofdata)+ ")\n"  
+        elif(typee=="string"):
+            return  "        self.xicro_instruction._SendString("+strr+namee+","+str(Nofdata)+ ")\n"
+        elif(typee=="bool" and Nofdata==1):
+            return  "        self.xicro_instruction._SendBool("+strr+namee+",1,"+str(cond)+ ")\n"
+        elif(typee=="bool" and Nofdata!=1):
+            return  "        self.xicro_instruction._SendBool("+strr+namee+","+str(Nofdata)+","+str(cond)+ ")\n"
+        elif(typee=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
+            return  "        self.xicro_instruction._SendFloat32("+strr+namee+","+str(Nofdata)+ ")\n"    
+        elif(typee=="float64"):
+            return  "        self.xicro_instruction._SendFloat64("+strr+namee+","+str(Nofdata)+ ")\n"
+        else:
+            print("ErorType "+strr+": ",typee)
+            return "1"
+    except:
+        print("Format "+strr+" wrong")
     return "0"
 def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
     try:
@@ -445,7 +518,7 @@ def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
                     fw.write("        self.xicro_instruction._SendContinue()\r")
                 else:
                     fw.write("        self.xicro_instruction._SendStop()\r")
-
+                    
             fw.write("        self.xicro_instruction._SendCRC()\r")
             fw.write("        self.xicro_instruction._To_Send()\r")
             fw.write("\r        return 1\r\r\r\r")
@@ -454,17 +527,125 @@ def gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata):
     except:
         print("gennerate Callback Fail.")
     return 0
+
+def gencallback_srv_server(fw,callback_srv,id_mcu,Idsrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,dataType_srv_res,dataName_srv_res,NofData_srv_res,i):
+    try:
+        # fw.write("    # gen service_server callback\r")
+        
+        fw.write("    def "+getafterdot(callback_srv)+"(self,request, response):\r")
+        fw.write("        st_index=self.Obj_uart.index.value\r")
+        fw.write("        self.xicro_instruction._Reset_Buff()\r")
+        fw.write("        self.xicro_instruction._Reset_CRC()\r")
+        fw.write("        self.xicro_instruction._SendStart()\r")
+        fw.write("        self.xicro_instruction._SendSignature("+str(id_mcu)+","+"13)\r")
+        fw.write("        self.xicro_instruction._SendIdsrv("+str(Idsrv[i])+")\r")
+        for j in range (0,len(dataType_srv_req[i])):
+            cond=j<len(dataType_srv_req[i])-1 #check flag continue or stop
+            fw.write(typetofunc_strr(dataType_srv_req[i][j],dataName_srv_req[i][j],NofData_srv_req[i][j],cond,"request."))
+            if(dataType_srv_req[i][j]=="bool" and NofData_srv_req[i][j]==1 ):
+                fw.write("# auto by 1 bool\n")
+            elif(cond):
+                fw.write("        self.xicro_instruction._SendContinue()\r")
+            else:
+                fw.write("        self.xicro_instruction._SendStop()\r")
+                
+        fw.write("        self.xicro_instruction._SendCRC()\r")
+        fw.write("        self.xicro_instruction._To_Send()\r\r")
+            
+        fw.write("        mana = mp.Manager()\n")
+        fw.write("        sh_res = mana.list()\n")
+        fw.write("        p = mp.Process(target=Protocol_XicroToRos_spin,args=(self.Obj_uart,2,"+str(Idsrv[i])+",sh_res,st_index,888,))\n")
+        fw.write("        p.start()\n")
+        fw.write("        st=time.time()\n")
+        fw.write("        while(1):\n")
+        fw.write("            if(len(sh_res)==self.maxlen_response):\n")   
+        fw.write("                p.join()\n")
+        # gen exec response
+        for j in range (0,len(dataName_srv_res[i])):
+            if(dataName_srv_res[i]!="xxicro_Empty"):
+                fw.write("                response."+dataName_srv_res[i][j]+"=sh_res["+str(j)+"]\n")
+        fw.write("                return response\n\n")
+        fw.write("            elif((time.time()-st>=self.timeout)):\n")
+        fw.write("                p.terminate()\n")
+        fw.write("                break\n\n")
+        fw.write("        return response\n\n")
+      
+            # fw.write("\r        return 1\r\r\r\r")
+        print("gennerate Callback_srv_Server Done.")
+        return 1
+    except:
+        print("gennerate Callback_srv_Server Fail.")
+    return 0
+def gencallback_action_server(fw,callback_action,id_mcu,Idaction_server,nameaction_server,interfaceaction_server,dataType_action_server_req,dataName_action_server_req,datagrab_action_server_req,NofData_action_server_req,datatypeProtocol_action_server_req,bytetograb_action_server_req,dataType_action_server_res,dataName_action_server_res,datagrab_action_server_res,NofData_action_server_res,datatypeProtocol_action_server_res,bytetograb_action_server_res,dataType_action_server_feed,dataName_action_server_feed,datagrab_action_server_feed,NofData_action_server_feed,datatypeProtocol_action_server_feed,bytetograb_action_server_feed,timeOut_action_server,i):
+    try:
+        fw.write("    def "+getafterdot(callback_action)+"(self, goal_handle):\r")
+        fw.write("        st_index=self.Obj_uart.index.value\r")
+        fw.write("        self.xicro_instruction._Reset_Buff()\r")
+        fw.write("        self.xicro_instruction._Reset_CRC()\r")
+        fw.write("        self.xicro_instruction._SendStart()\r")
+        fw.write("        self.xicro_instruction._SendSignature("+str(id_mcu)+","+"8)\r")
+        fw.write("        self.xicro_instruction._SendIdaction("+str(Idaction_server[i])+")\r")
+        for j in range (0,len(dataType_action_server_req[i])):
+            cond=j<len(dataType_action_server_req[i])-1 #check flag continue or stop
+            fw.write(typetofunc_strr(dataType_action_server_req[i][j],dataName_action_server_req[i][j],NofData_action_server_req[i][j],cond,"goal_handle.request."))
+            if(dataType_action_server_req[i][j]=="bool" and NofData_action_server_req[i][j]==1 ):
+                fw.write("# auto by 1 bool\n")
+            elif(cond):
+                fw.write("        self.xicro_instruction._SendContinue()\r")
+            else:
+                fw.write("        self.xicro_instruction._SendStop()\r")
+                
+        fw.write("        self.xicro_instruction._SendCRC()\r")
+        fw.write("        self.xicro_instruction._To_Send()\r\r")
+        fw.write("        mana = mp.Manager()\n")
+        fw.write("        sh_res = mana.list()\n")
+        fw.write("        sh_res_2 = mana.list()\n")
+        fw.write("        p = mp.Process(target=Protocol_XicroToRos_spin,args=(self.Obj_uart,4,"+str(Idaction_server[i])+",sh_res,st_index,sh_res_2,))\n")
+        fw.write("        p.start()\n")
+        fw.write("        st=time.time()\n")
+        fw.write("        feedback_msg = "+getbeforedot(interfaceaction_server[i].split("/")[1])+".Feedback()\n")
+        fw.write("        result = "+getbeforedot(interfaceaction_server[i].split("/")[1])+".Result()\n")
+        fw.write("        while(1):\n")
+        fw.write("            if(len(sh_res)!= 0):\n")
+        fw.write("                feed=sh_res[0]\n")
+        fw.write("                sh_res.pop(0)\n")
+        for j in range (0,len(dataName_action_server_feed[i])):
+            if(dataName_action_server_feed[i]!="xxicro_Empty"):
+                fw.write("                feedback_msg."+dataName_action_server_feed[i][j]+"=feed["+str(j)+"]\n")
+        fw.write("                goal_handle.publish_feedback(feedback_msg)\n")
+        fw.write("\n            elif(len(sh_res_2)!= 0):\n")
+        fw.write("                p.join()\n")
+        fw.write("                goal_handle.succeed()\n")
+        fw.write("                resu=sh_res_2[0]\n")
+        for j in range (0,len(dataName_action_server_res[i])):
+            if(dataName_action_server_res[i]!="xxicro_Empty"):
+                fw.write("                result."+dataName_action_server_res[i][j]+"=resu["+str(j)+"]\n")
+        fw.write("                return result\n\n")
+        fw.write("            elif((time.time()-st>=self.timeout)):\n")
+        fw.write("                p.terminate()\n")
+        fw.write("                print('timeout Action server IdOn : "+str(Idaction_server[i])+"')\n")
+        fw.write("                goal_handle.abort()\n")
+        fw.write("                break\n")
+        fw.write("        return result\n")
+        print("gennerate Callback_action_Server Done.")
+        return 1
+    except:
+        print("gennerate Callback_action_Server Fail.")
+    
+    
+    return 1
+
 def genImport(fw):
     try:
-        fw.write("\n# gen import msg\n")
+        fw.write("\r# gen import msg\r")
         interfacemsg=[]
         Setup_Sub=get_params("Setup_Subscriber")
         for i in range(0,len(Setup_Sub)):
             interfacemsg.append(Setup_Sub[i][2])
         Setup_Pub=get_params("Setup_Publisher")
         for i in range(0,len(Setup_Pub)):
-            interfacemsg.append(Setup_Pub[i][2])
-
+            interfacemsg.append(Setup_Pub[i][2])  
+            
         # print("interfacemsg",interfacemsg)
         tt=[]
         for i in range(0,len(interfacemsg)):
@@ -476,13 +657,13 @@ def genImport(fw):
                 tt.append(interfacemsg[i])
         interfacemsg=tt.copy()
         for i in range(0,len(interfacemsg)):
-            fw.write("from "+interfacemsg[i].split("/")[0]+".msg import "+interfacemsg[i].split("/")[1].split(".")[0] + "\n")
-        fw.write("\n\n# gen import srv\n")
+            fw.write("from "+interfacemsg[i].split("/")[0]+".msg import "+interfacemsg[i].split("/")[1].split(".")[0] + "\r")
+        fw.write("\r\r# gen import srv client\r")
 
         interfacesrv=[]
         Setup_Srv=get_params("Setup_Srv_client")
         for i in range(0,len(Setup_Srv)):
-            interfacesrv.append(Setup_Srv[i][2])
+            interfacesrv.append(Setup_Srv[i][2])  
         tt=[]
         for i in range(0,len(interfacesrv)):
             s=0
@@ -494,6 +675,65 @@ def genImport(fw):
         interfacesrv=tt.copy()
         for i in range(0,len(interfacesrv)):
             fw.write("from "+interfacesrv[i].split("/")[0]+".srv import "+interfacesrv[i].split("/")[1].split(".")[0] + "\r")
+        fw.write("\r\r")
+
+        fw.write("\r\r# gen import srv server\r")
+
+        interfacesrv=[]
+        Setup_Srv=get_params("Setup_Srv_server")
+        for i in range(0,len(Setup_Srv)):
+            interfacesrv.append(Setup_Srv[i][2])  
+        tt=[]
+        for i in range(0,len(interfacesrv)):
+            s=0
+            for j in range(0,len(tt)):
+                if(interfacesrv[i] == tt[j]):
+                    s=s+1
+            if(s==0):
+                tt.append(interfacesrv[i])
+        interfacesrv=tt.copy()
+        for i in range(0,len(interfacesrv)):
+            fw.write("from "+interfacesrv[i].split("/")[0]+".srv import "+interfacesrv[i].split("/")[1].split(".")[0] + "\r")
+        fw.write("\r\r")
+
+
+        fw.write("\r\r# gen import action client\r")
+
+        interfaceSetup_Action_client=[]
+        Setup_Action_client=get_params("Setup_Action_client")
+        for i in range(0,len(Setup_Action_client)):
+            interfaceSetup_Action_client.append(Setup_Action_client[i][2])  
+        tt=[]
+        for i in range(0,len(interfaceSetup_Action_client)):
+            s=0
+            for j in range(0,len(tt)):
+                if(interfaceSetup_Action_client[i] == tt[j]):
+                    s=s+1
+            if(s==0):
+                tt.append(interfaceSetup_Action_client[i])
+        interfaceSetup_Action_client=tt.copy()
+        for i in range(0,len(interfaceSetup_Action_client)):
+            fw.write("from "+interfaceSetup_Action_client[i].split("/")[0]+".action import "+interfaceSetup_Action_client[i].split("/")[1].split(".")[0] + "\r")
+        fw.write("\r\r")
+
+
+        fw.write("\r\r# gen import action server\r")
+
+        interfaceAction_server=[]
+        Setup_Action_server=get_params("Setup_Action_server")
+        for i in range(0,len(Setup_Action_server)):
+            interfaceAction_server.append(Setup_Action_server[i][2])  
+        tt=[]
+        for i in range(0,len(interfaceAction_server)):
+            s=0
+            for j in range(0,len(tt)):
+                if(interfaceAction_server[i] == tt[j]):
+                    s=s+1
+            if(s==0):
+                tt.append(interfaceAction_server[i])
+        interfaceAction_server=tt.copy()
+        for i in range(0,len(interfaceAction_server)):
+            fw.write("from "+interfaceAction_server[i].split("/")[0]+".action import "+interfaceAction_server[i].split("/")[1].split(".")[0] + "\r")
         fw.write("\r\r")
 
 
@@ -532,7 +772,7 @@ def setup_srv_protocol():
     bytetograb_srv_res=[]
     interfacein_srv_req=[]
     interfacein_srv_res=[]
-    for i in range (0,len(interfacesrv)):
+    for i in range (0,len(interfacesrv)):  
         flagP=0
         tempType_req=[]
         tempName_req=[]
@@ -599,7 +839,7 @@ def setup_srv_protocol():
             if(dataType_srv_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
                 dataType_srv_res[i][j]="float32"
 
-    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index
+    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
     for p in range(0,2):
         if(p==0):
             dataType=dataType_srv_req
@@ -621,7 +861,7 @@ def setup_srv_protocol():
                         elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
                             tt.append(0.0)
                         elif(dataType[i][j].split("[")[0]=="bool"):
-                            tt.append(False)
+                            tt.append(False)   
                         else:
                             tt.append(0)
                     tempdatagrab.append(tt)
@@ -635,14 +875,163 @@ def setup_srv_protocol():
                     elif(dataType[i][j]=="xxicro_Empty"):
                         tempdatagrab.append("xxicro_Empty")
                     else:
-                        tempdatagrab.append(0)
+                        tempdatagrab.append(0) 
 
                 if(dataType[i][j].find("[")!=-1 ):
                     dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
                 a,b=typetoProtocol(dataType[i][j],NofData[i][j])
                 tempdataprotocol.append(a)
                 tempbytetograb.append(b)
+            
+            if(p==0):
+                datatypeProtocol_srv_req.append(tempdataprotocol)
+                bytetograb_srv_req.append(tempbytetograb)
+                datagrab_srv_req.append(tempdatagrab)
+            elif(p==1):
+                datatypeProtocol_srv_res.append(tempdataprotocol)
+                bytetograb_srv_res.append(tempbytetograb)
+                datagrab_srv_res.append(tempdatagrab)
+    # print(Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res)
+    return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut
+def setup_srv_server_protocol():
+    setup_srv=get_params('Setup_Srv_server')
+    Idmcu=get_params("Idmcu")
+    Idsrv=[]
+    namesrv=[]
+    interfacesrv=[]
+    timeOut=[]
+    for i in range(0,len(setup_srv)):
+        Idsrv.append(setup_srv[i][0])
+        namesrv.append(setup_srv[i][1])
+        interfacesrv.append(setup_srv[i][2])
+        timeOut.append(setup_srv[i][3])
+    print('Done load YAML srv_server.')
+    # print(Idsrv,namesrv,interfacesrv )
+    dataType_srv_req=[]
+    dataName_srv_req=[]
+    NofData_srv_req=[]
+    datagrab_srv_req=[]
+    datatypeProtocol_srv_req=[]
+    bytetograb_srv_req=[]
+    dataType_srv_res=[]
+    dataName_srv_res=[]
+    NofData_srv_res=[]
+    datagrab_srv_res=[]
+    datatypeProtocol_srv_res=[]
+    bytetograb_srv_res=[]
+    interfacein_srv_req=[]
+    interfacein_srv_res=[]
+    for i in range (0,len(interfacesrv)):  
+        flagP=0
+        tempType_req=[]
+        tempName_req=[]
+        tempN_req=[]
+        tempType_res=[]
+        tempName_res=[]
+        tempN_res=[]
+        tempinterfacein_req=[]
+        tempinterfacein_res=[]
+        path = os.path.join(get_package_share_directory( interfacesrv[i].split("/")[0]),'srv', interfacesrv[i].split("/")[1])
+        srv = open(path, 'r').read().splitlines()
+        for j in range(0,len(srv)):
+            line=srv[j].split()
+            if(len(line)>0):
+                if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
+                    tempType_req.append(line[0])
+                    tempName_req.append(line[1])
+                    tempN_req.append(checkNofdata(line[0]))
+                    tempinterfacein_req.append(interfacesrv[i].split("/")[0])
+                elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
+                    tempType_res.append(line[0])
+                    tempName_res.append(line[1])
+                    tempN_res.append(checkNofdata(line[0]))
+                    tempinterfacein_res.append(interfacesrv[i].split("/")[0])
+                if(line[0]=="---"):
+                    flagP=1
+        # print(tempN_req)
+        # print(tempType_req)
+        # print(tempName_req)
+        # print(tempinterfacein_req)
+        if(len(tempType_req)==0):
+            NofData_srv_req.append([1])
+            dataType_srv_req.append(["xxicro_Empty"])
+            dataName_srv_req.append(["xxicro_Empty"])
+            interfacein_srv_req.append([interfacesrv[i].split("/")[0]])
+        else:
+            NofData_srv_req.append(tempN_req)
+            dataType_srv_req.append(tempType_req)
+            dataName_srv_req.append(tempName_req)
+            interfacein_srv_req.append(tempinterfacein_req)
 
+        if(len(tempType_res)==0):
+            NofData_srv_res.append([1])
+            dataType_srv_res.append(["xxicro_Empty"])
+            dataName_srv_res.append(["xxicro_Empty"])
+            interfacein_srv_res.append([interfacesrv[i].split("/")[0]])
+        else:
+            NofData_srv_res.append(tempN_res)
+            dataType_srv_res.append(tempType_res)
+            dataName_srv_res.append(tempName_res)
+            interfacein_srv_res.append(tempinterfacein_res)
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+
+    for i in range(0,10):
+        Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,interfacein_srv_req)
+        Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res=expandSub(Idmcu,Idsrv,namesrv,interfacesrv,dataType_srv_res,dataName_srv_res,NofData_srv_res,interfacein_srv_res)
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+    for i in range(0,len(dataType_srv_req)): # bias float64 to float32
+        for j in range(0,len(dataType_srv_req[i])):
+            if(dataType_srv_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_srv_req[i][j]="float32"
+    for i in range(0,len(dataType_srv_res)): # bias float64 to float32
+        for j in range(0,len(dataType_srv_res[i])):
+            if(dataType_srv_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_srv_res[i][j]="float32"
+
+    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
+    for p in range(0,2):
+        if(p==0):
+            dataType=dataType_srv_req
+            NofData=NofData_srv_req
+        elif(p==1):
+            dataType=dataType_srv_res
+            NofData=NofData_srv_res
+        for i in range(0,len(dataType)):
+            tempbytetograb=[]
+            tempdataprotocol=[]
+            tempdatagrab=[]
+            for j in range(0,len(dataType[i])):
+                #data type remove []
+                if(NofData[i][j]!=1):
+                    tt=[]
+                    for k in range(0,NofData[i][j]):
+                        if(dataType[i][j].split("[")[0]=="string"):
+                            tt.append("")
+                        elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
+                            tt.append(0.0)
+                        elif(dataType[i][j].split("[")[0]=="bool"):
+                            tt.append(False)   
+                        else:
+                            tt.append(0)
+                    tempdatagrab.append(tt)
+                else:
+                    if(dataType[i][j]=="string"):
+                        tempdatagrab.append("")
+                    elif(dataType[i][j]=="float32" or dataType[i][j]=="float64"):
+                        tempdatagrab.append(0.0)
+                    elif(dataType[i][j]=="bool"):
+                        tempdatagrab.append(False)
+                    elif(dataType[i][j]=="xxicro_Empty"):
+                        tempdatagrab.append("xxicro_Empty")
+                    else:
+                        tempdatagrab.append(0) 
+
+                if(dataType[i][j].find("[")!=-1 ):
+                    dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
+                a,b=typetoProtocol(dataType[i][j],NofData[i][j])
+                tempdataprotocol.append(a)
+                tempbytetograb.append(b)
+            
             if(p==0):
                 datatypeProtocol_srv_req.append(tempdataprotocol)
                 bytetograb_srv_req.append(tempbytetograb)
@@ -654,62 +1043,525 @@ def setup_srv_protocol():
     # print(Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res)
     return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut
 
+def setup_action_client_protocol():
+    setup_action=get_params('Setup_Action_client')
+    Idmcu=get_params("Idmcu")
+    Idaction=[]
+    nameaction=[]
+    interfaceaction=[]
+    timeOut=[]
+    for i in range(0,len(setup_action)):
+        Idaction.append(setup_action[i][0])
+        nameaction.append(setup_action[i][1])
+        interfaceaction.append(setup_action[i][2])
+        timeOut.append(setup_action[i][3])
+    print('Done load YAML action client.')
+    # print(Idaction,nameaction,interfaceaction )
+    dataType_action_req=[]
+    dataName_action_req=[]
+    NofData_action_req=[]
+    datagrab_action_req=[]
+    datatypeProtocol_action_req=[]
+    bytetograb_action_req=[]
 
-def gennerate():
+    dataType_action_res=[]
+    dataName_action_res=[]
+    NofData_action_res=[]
+    datagrab_action_res=[]
+    datatypeProtocol_action_res=[]
+    bytetograb_action_res=[]
 
+    dataType_action_feed=[]
+    dataName_action_feed=[]
+    NofData_action_feed=[]
+    datagrab_action_feed=[]
+    datatypeProtocol_action_feed=[]
+    bytetograb_action_feed=[]
+
+
+    interfacein_action_req=[]
+    interfacein_action_res=[]
+    interfacein_action_feed=[]
+    for i in range (0,len(interfaceaction)):  
+        flagP=0
+        tempType_req=[]
+        tempName_req=[]
+        tempN_req=[]
+
+        tempType_res=[]
+        tempName_res=[]
+        tempN_res=[]
+
+        tempType_feed=[]
+        tempName_feed=[]
+        tempN_feed=[]
+
+        tempinterfacein_req=[]
+        tempinterfacein_res=[]
+        tempinterfacein_feed=[]
+        path = os.path.join(get_package_share_directory( interfaceaction[i].split("/")[0]),'action', interfaceaction[i].split("/")[1])
+        action = open(path, 'r').read().splitlines()
+        for j in range(0,len(action)):
+            line=action[j].split()
+            if(len(line)>0):
+                if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
+                    tempType_req.append(line[0])
+                    tempName_req.append(line[1])
+                    tempN_req.append(checkNofdata(line[0]))
+                    tempinterfacein_req.append(interfaceaction[i].split("/")[0])
+                elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
+                    tempType_res.append(line[0])
+                    tempName_res.append(line[1])
+                    tempN_res.append(checkNofdata(line[0]))
+                    tempinterfacein_res.append(interfaceaction[i].split("/")[0])
+                elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==2):
+                    tempType_feed.append(line[0])
+                    tempName_feed.append(line[1])
+                    tempN_feed.append(checkNofdata(line[0]))
+                    tempinterfacein_feed.append(interfaceaction[i].split("/")[0])
+                if(line[0]=="---"):
+                    flagP=flagP+1
+        # print(tempN_req)
+        # print(tempType_req)
+        # print(tempName_req)
+        # print(tempinterfacein_req)
+        if(len(tempType_req)==0):
+            NofData_action_req.append([1])
+            dataType_action_req.append(["xxicro_Empty"])
+            dataName_action_req.append(["xxicro_Empty"])
+            interfacein_action_req.append([interfaceaction[i].split("/")[0]])
+        else:
+            NofData_action_req.append(tempN_req)
+            dataType_action_req.append(tempType_req)
+            dataName_action_req.append(tempName_req)
+            interfacein_action_req.append(tempinterfacein_req)
+
+        if(len(tempType_res)==0):
+            NofData_action_res.append([1])
+            dataType_action_res.append(["xxicro_Empty"])
+            dataName_action_res.append(["xxicro_Empty"])
+            interfacein_action_res.append([interfaceaction[i].split("/")[0]])
+        else:
+            NofData_action_res.append(tempN_res)
+            dataType_action_res.append(tempType_res)
+            dataName_action_res.append(tempName_res)
+            interfacein_action_res.append(tempinterfacein_res)
+
+        if(len(tempType_feed)==0):
+            NofData_action_feed.append([1])
+            dataType_action_feed.append(["xxicro_Empty"])
+            dataName_action_feed.append(["xxicro_Empty"])
+            interfacein_action_feed.append([interfaceaction[i].split("/")[0]])
+        else:
+            NofData_action_feed.append(tempN_feed)
+            dataType_action_feed.append(tempType_feed)
+            dataName_action_feed.append(tempName_feed)
+            interfacein_action_feed.append(tempinterfacein_feed)
+        
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+
+    for i in range(0,10):
+        Idmcu,Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,NofData_action_req,interfacein_action_req=expandSub(Idmcu,Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,NofData_action_req,interfacein_action_req)
+        Idmcu,Idaction,nameaction,interfaceaction,dataType_action_res,dataName_action_res,NofData_action_res,interfacein_action_res=expandSub(Idmcu,Idaction,nameaction,interfaceaction,dataType_action_res,dataName_action_res,NofData_action_res,interfacein_action_res)
+        Idmcu,Idaction,nameaction,interfaceaction,dataType_action_feed,dataName_action_feed,NofData_action_feed,interfacein_action_feed=expandSub(Idmcu,Idaction,nameaction,interfaceaction,dataType_action_feed,dataName_action_feed,NofData_action_feed,interfacein_action_feed)
+
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+    for i in range(0,len(dataType_action_req)): # bias float64 to float32
+        for j in range(0,len(dataType_action_req[i])):
+            if(dataType_action_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_action_req[i][j]="float32"
+    for i in range(0,len(dataType_action_res)): # bias float64 to float32
+        for j in range(0,len(dataType_action_res[i])):
+            if(dataType_action_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_action_res[i][j]="float32"
+    for i in range(0,len(dataType_action_feed)): # bias float64 to float32
+        for j in range(0,len(dataType_action_feed[i])):
+            if(dataType_action_feed[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_action_feed[i][j]="float32"
+
+    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
+    for p in range(0,3):
+        if(p==0):
+            dataType=dataType_action_req
+            NofData=NofData_action_req
+        elif(p==1):
+            dataType=dataType_action_res
+            NofData=NofData_action_res
+        elif(p==2):
+            dataType=dataType_action_feed
+            NofData=NofData_action_feed
+        for i in range(0,len(dataType)):
+            tempbytetograb=[]
+            tempdataprotocol=[]
+            tempdatagrab=[]
+            for j in range(0,len(dataType[i])):
+                #data type remove []
+                if(NofData[i][j]!=1):
+                    tt=[]
+                    for k in range(0,NofData[i][j]):
+                        if(dataType[i][j].split("[")[0]=="string"):
+                            tt.append("")
+                        elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
+                            tt.append(0.0)
+                        elif(dataType[i][j].split("[")[0]=="bool"):
+                            tt.append(False)   
+                        else:
+                            tt.append(0)
+                    tempdatagrab.append(tt)
+                else:
+                    if(dataType[i][j]=="string"):
+                        tempdatagrab.append("")
+                    elif(dataType[i][j]=="float32" or dataType[i][j]=="float64"):
+                        tempdatagrab.append(0.0)
+                    elif(dataType[i][j]=="bool"):
+                        tempdatagrab.append(False)
+                    elif(dataType[i][j]=="xxicro_Empty"):
+                        tempdatagrab.append("xxicro_Empty")
+                    else:
+                        tempdatagrab.append(0) 
+
+                if(dataType[i][j].find("[")!=-1 ):
+                    dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
+                a,b=typetoProtocol(dataType[i][j],NofData[i][j])
+                tempdataprotocol.append(a)
+                tempbytetograb.append(b)
+            
+            if(p==0):
+                datatypeProtocol_action_req.append(tempdataprotocol)
+                bytetograb_action_req.append(tempbytetograb)
+                datagrab_action_req.append(tempdatagrab)
+            elif(p==1):
+                datatypeProtocol_action_res.append(tempdataprotocol)
+                bytetograb_action_res.append(tempbytetograb)
+                datagrab_action_res.append(tempdatagrab)
+            elif(p==2):
+                datatypeProtocol_action_feed.append(tempdataprotocol)
+                bytetograb_action_feed.append(tempbytetograb)
+                datagrab_action_feed.append(tempdatagrab)
+    # print(Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res)
+    return Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,datagrab_action_req,NofData_action_req,datatypeProtocol_action_req,bytetograb_action_req,dataType_action_res,dataName_action_res,datagrab_action_res,NofData_action_res,datatypeProtocol_action_res,bytetograb_action_res,dataType_action_feed,dataName_action_feed,datagrab_action_feed,NofData_action_feed,datatypeProtocol_action_feed,bytetograb_action_feed,timeOut
+
+def setup_action_server_protocol():
+    setup_action=get_params('Setup_Action_server')
+    Idmcu=get_params("Idmcu")
+    Idaction=[]
+    nameaction=[]
+    interfaceaction=[]
+    timeOut=[]
+    for i in range(0,len(setup_action)):
+        Idaction.append(setup_action[i][0])
+        nameaction.append(setup_action[i][1])
+        interfaceaction.append(setup_action[i][2])
+        timeOut.append(setup_action[i][3])
+    print('Done load YAML action server.')
+    # print(Idaction,nameaction,interfaceaction )
+    dataType_action_req=[]
+    dataName_action_req=[]
+    NofData_action_req=[]
+    datagrab_action_req=[]
+    datatypeProtocol_action_req=[]
+    bytetograb_action_req=[]
+
+    dataType_action_res=[]
+    dataName_action_res=[]
+    NofData_action_res=[]
+    datagrab_action_res=[]
+    datatypeProtocol_action_res=[]
+    bytetograb_action_res=[]
+
+    dataType_action_feed=[]
+    dataName_action_feed=[]
+    NofData_action_feed=[]
+    datagrab_action_feed=[]
+    datatypeProtocol_action_feed=[]
+    bytetograb_action_feed=[]
+
+
+    interfacein_action_req=[]
+    interfacein_action_res=[]
+    interfacein_action_feed=[]
+    for i in range (0,len(interfaceaction)):  
+        flagP=0
+        tempType_req=[]
+        tempName_req=[]
+        tempN_req=[]
+
+        tempType_res=[]
+        tempName_res=[]
+        tempN_res=[]
+
+        tempType_feed=[]
+        tempName_feed=[]
+        tempN_feed=[]
+
+        tempinterfacein_req=[]
+        tempinterfacein_res=[]
+        tempinterfacein_feed=[]
+        path = os.path.join(get_package_share_directory( interfaceaction[i].split("/")[0]),'action', interfaceaction[i].split("/")[1])
+        action = open(path, 'r').read().splitlines()
+        for j in range(0,len(action)):
+            line=action[j].split()
+            if(len(line)>0):
+                if(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==0):
+                    tempType_req.append(line[0])
+                    tempName_req.append(line[1])
+                    tempN_req.append(checkNofdata(line[0]))
+                    tempinterfacein_req.append(interfaceaction[i].split("/")[0])
+                elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==1):
+                    tempType_res.append(line[0])
+                    tempName_res.append(line[1])
+                    tempN_res.append(checkNofdata(line[0]))
+                    tempinterfacein_res.append(interfaceaction[i].split("/")[0])
+                elif(len(line)!=0 and line[0]!="#" and line[0]!="---" and flagP==2):
+                    tempType_feed.append(line[0])
+                    tempName_feed.append(line[1])
+                    tempN_feed.append(checkNofdata(line[0]))
+                    tempinterfacein_feed.append(interfaceaction[i].split("/")[0])
+                if(line[0]=="---"):
+                    flagP=flagP+1
+        # print(tempN_req)
+        # print(tempType_req)
+        # print(tempName_req)
+        # print(tempinterfacein_req)
+        if(len(tempType_req)==0):
+            NofData_action_req.append([1])
+            dataType_action_req.append(["xxicro_Empty"])
+            dataName_action_req.append(["xxicro_Empty"])
+            interfacein_action_req.append([interfaceaction[i].split("/")[0]])
+        else:
+            NofData_action_req.append(tempN_req)
+            dataType_action_req.append(tempType_req)
+            dataName_action_req.append(tempName_req)
+            interfacein_action_req.append(tempinterfacein_req)
+
+        if(len(tempType_res)==0):
+            NofData_action_res.append([1])
+            dataType_action_res.append(["xxicro_Empty"])
+            dataName_action_res.append(["xxicro_Empty"])
+            interfacein_action_res.append([interfaceaction[i].split("/")[0]])
+        else:
+            NofData_action_res.append(tempN_res)
+            dataType_action_res.append(tempType_res)
+            dataName_action_res.append(tempName_res)
+            interfacein_action_res.append(tempinterfacein_res)
+
+        if(len(tempType_feed)==0):
+            NofData_action_feed.append([1])
+            dataType_action_feed.append(["xxicro_Empty"])
+            dataName_action_feed.append(["xxicro_Empty"])
+            interfacein_action_feed.append([interfaceaction[i].split("/")[0]])
+        else:
+            NofData_action_feed.append(tempN_feed)
+            dataType_action_feed.append(tempType_feed)
+            dataName_action_feed.append(tempName_feed)
+            interfacein_action_feed.append(tempinterfacein_feed)
+        
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+
+    for i in range(0,10):
+        Idmcu,Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,NofData_action_req,interfacein_action_req=expandSub(Idmcu,Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,NofData_action_req,interfacein_action_req)
+        Idmcu,Idaction,nameaction,interfaceaction,dataType_action_res,dataName_action_res,NofData_action_res,interfacein_action_res=expandSub(Idmcu,Idaction,nameaction,interfaceaction,dataType_action_res,dataName_action_res,NofData_action_res,interfacein_action_res)
+        Idmcu,Idaction,nameaction,interfaceaction,dataType_action_feed,dataName_action_feed,NofData_action_feed,interfacein_action_feed=expandSub(Idmcu,Idaction,nameaction,interfaceaction,dataType_action_feed,dataName_action_feed,NofData_action_feed,interfacein_action_feed)
+
+    # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
+    for i in range(0,len(dataType_action_req)): # bias float64 to float32
+        for j in range(0,len(dataType_action_req[i])):
+            if(dataType_action_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_action_req[i][j]="float32"
+    for i in range(0,len(dataType_action_res)): # bias float64 to float32
+        for j in range(0,len(dataType_action_res[i])):
+            if(dataType_action_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_action_res[i][j]="float32"
+    for i in range(0,len(dataType_action_feed)): # bias float64 to float32
+        for j in range(0,len(dataType_action_feed[i])):
+            if(dataType_action_feed[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+                dataType_action_feed[i][j]="float32"
+
+    # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
+    for p in range(0,3):
+        if(p==0):
+            dataType=dataType_action_req
+            NofData=NofData_action_req
+        elif(p==1):
+            dataType=dataType_action_res
+            NofData=NofData_action_res
+        elif(p==2):
+            dataType=dataType_action_feed
+            NofData=NofData_action_feed
+        for i in range(0,len(dataType)):
+            tempbytetograb=[]
+            tempdataprotocol=[]
+            tempdatagrab=[]
+            for j in range(0,len(dataType[i])):
+                #data type remove []
+                if(NofData[i][j]!=1):
+                    tt=[]
+                    for k in range(0,NofData[i][j]):
+                        if(dataType[i][j].split("[")[0]=="string"):
+                            tt.append("")
+                        elif(dataType[i][j].split("[")[0]=="float32" or dataType[i][j].split("[")[0]=="float64"):
+                            tt.append(0.0)
+                        elif(dataType[i][j].split("[")[0]=="bool"):
+                            tt.append(False)   
+                        else:
+                            tt.append(0)
+                    tempdatagrab.append(tt)
+                else:
+                    if(dataType[i][j]=="string"):
+                        tempdatagrab.append("")
+                    elif(dataType[i][j]=="float32" or dataType[i][j]=="float64"):
+                        tempdatagrab.append(0.0)
+                    elif(dataType[i][j]=="bool"):
+                        tempdatagrab.append(False)
+                    elif(dataType[i][j]=="xxicro_Empty"):
+                        tempdatagrab.append("xxicro_Empty")
+                    else:
+                        tempdatagrab.append(0) 
+
+                if(dataType[i][j].find("[")!=-1 ):
+                    dataType[i][j]=dataType[i][j][0:dataType[i][j].find("[")]
+                a,b=typetoProtocol(dataType[i][j],NofData[i][j])
+                tempdataprotocol.append(a)
+                tempbytetograb.append(b)
+            
+            if(p==0):
+                datatypeProtocol_action_req.append(tempdataprotocol)
+                bytetograb_action_req.append(tempbytetograb)
+                datagrab_action_req.append(tempdatagrab)
+            elif(p==1):
+                datatypeProtocol_action_res.append(tempdataprotocol)
+                bytetograb_action_res.append(tempbytetograb)
+                datagrab_action_res.append(tempdatagrab)
+            elif(p==2):
+                datatypeProtocol_action_feed.append(tempdataprotocol)
+                bytetograb_action_feed.append(tempbytetograb)
+                datagrab_action_feed.append(tempdatagrab)
+    # print(Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res)
+    return Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,datagrab_action_req,NofData_action_req,datatypeProtocol_action_req,bytetograb_action_req,dataType_action_res,dataName_action_res,datagrab_action_res,NofData_action_res,datatypeProtocol_action_res,bytetograb_action_res,dataType_action_feed,dataName_action_feed,datagrab_action_feed,NofData_action_feed,datatypeProtocol_action_feed,bytetograb_action_feed,timeOut
+
+
+
+def genclassSrv_server(fw,id_mcu):
+    Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut=setup_srv_server_protocol()
+    srv_server=[]
+    for i in range(0,len(Idsrv)):
+        srv_server.append("Srv_server_"+namesrv[i]+"_node")
+        fw.write("\nclass Srv_server_"+namesrv[i]+"_node(Node):\r")
+        fw.write("    def __init__(self,Obj_uart):\n")
+        fw.write("        super().__init__('xicro_"+srv_server[i].lower()+"')\n")
+        fw.write("        self.Obj_uart=Obj_uart\n")
+        fw.write("        self.xicro_instruction = Xicro_instruction(self.Obj_uart)\n")
+        fw.write("        self.timeout = "+str(timeOut[i])+"\n")
+        fw.write("        self.maxlen_response = "+str(len(datagrab_srv_res))+"\n\n")
+        callback_srv=genSrv_server(fw,namesrv,interfacesrv,i)
+        fw.write("\n\n    # gen service_server callback\n")
+        gencallback_srv_server(fw,callback_srv,id_mcu,Idsrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,dataType_srv_res,dataName_srv_res,NofData_srv_res,i)
+    return srv_server
+def genclassAction_server(fw,id_mcu):
+    Idaction_server,nameaction_server,interfaceaction_server,dataType_action_server_req,dataName_action_server_req,datagrab_action_server_req,NofData_action_server_req,datatypeProtocol_action_server_req,bytetograb_action_server_req,dataType_action_server_res,dataName_action_server_res,datagrab_action_server_res,NofData_action_server_res,datatypeProtocol_action_server_res,bytetograb_action_server_res,dataType_action_server_feed,dataName_action_server_feed,datagrab_action_server_feed,NofData_action_server_feed,datatypeProtocol_action_server_feed,bytetograb_action_server_feed,timeOut_action_server = setup_action_server_protocol()
+    action_server=[]
+    for i in range(0,len(Idaction_server)):
+        action_server.append("Action_server_"+nameaction_server[i]+"_node")
+        fw.write("\nclass Action_server_"+nameaction_server[i]+"_node(Node):\r")
+        fw.write("    def __init__(self,Obj_uart):\n")
+        fw.write("        super().__init__('xicro_"+nameaction_server[i].lower()+"_node')\n")
+        fw.write("        self.Obj_uart=Obj_uart\n")
+        fw.write("        self.xicro_instruction = Xicro_instruction(self.Obj_uart)\n")
+        fw.write("        self.timeout = "+str(timeOut_action_server[i])+"\n")
+        callback_action=genAction_server(fw,nameaction_server,interfaceaction_server,i)
+        fw.write("\n\n    # gen action_server callback\n")
+        gencallback_action_server(fw,callback_action,id_mcu,Idaction_server,nameaction_server,interfaceaction_server,dataType_action_server_req,dataName_action_server_req,datagrab_action_server_req,NofData_action_server_req,datatypeProtocol_action_server_req,bytetograb_action_server_req,dataType_action_server_res,dataName_action_server_res,datagrab_action_server_res,NofData_action_server_res,datatypeProtocol_action_server_res,bytetograb_action_server_res,dataType_action_server_feed,dataName_action_server_feed,datagrab_action_server_feed,NofData_action_server_feed,datatypeProtocol_action_server_feed,bytetograb_action_server_feed,timeOut_action_server,i)
+    return action_server
+def genSrv_server_spin(fw,srv_server):
+    for i in range(0,len(srv_server)):
+        fw.write("    "+srv_server[i].lower()+"="+srv_server[i]+"(Obj_uart)\n")
+    fw.write("\n\n    # gen srv executor\n")
+    for i in range(0,len(srv_server)):
+        fw.write("    executor.add_node("+srv_server[i].lower()+")\n")
+    return 1
+def genAction_server_spin(fw,action_server):
+    for i in range(0,len(action_server)):
+        fw.write("    "+action_server[i].lower()+"="+action_server[i]+"(Obj_uart)\n")
+    fw.write("\n\n    # gen action executor\n")
+    for i in range(0,len(action_server)):
+        fw.write("    executor.add_node("+action_server[i].lower()+")\n")
+    return 1
+def gennerate(): 
+    
     id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,Nofdata=setupvarforcreatelib()
     # print(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,Nofdata)
     pathr= os.path.join(gPath(1)+'/.Xicro_node_preSetup.txt')
-
+    
     pathw= os.path.join(gPath(0)+ '/scripts/xicro_node_'+get_params("Namespace")+"_ID_"+str(id_mcu)+'_'+sys.argv[1]+'.py')
-    # os.popen("vim " + pathw)
+    # os.popen("code " + pathw)
 
     # print(gPath(0)+ '/scripts/xicro_node_'+get_params("Namespace")+"_ID_"+str(id_mcu)+'.py')
-    fr=open(pathr, 'r')
-    fw=open(pathw, 'w')
-    fw.write("#!/usr/bin/python3\n\n\n\n")
-    fw.write("# ***************************************************************************************************************************************************\n")
-    fw.write("#      |          This script was auto-generated by generate_Xicro_node.py which received parameters from setup_xicro.yaml                    |\n")
-    fw.write("#      |                                         EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                                 |\n")
-    fw.write("# ***************************************************************************************************************************************************\n\n")
+    fr=open(pathr, 'r') 
+    fw=open(pathw, 'w') 
+    fw.write("#!/usr/bin/python3\r\r\r\r")
+    fw.write("# ***************************************************************************************************************************************************\r")
+    fw.write("#      |          This script was auto-generated by generate_Xicro_node.py which received parameters from setup_xicro.yaml                    |\r")
+    fw.write("#      |                                         EDITING THIS FILE BY HAND IS NOT RECOMMENDED                                                 |\r")
+    fw.write("# ***************************************************************************************************************************************************\r\r")
     c=0
     callback=[]
+    srv_server=[]
+    action_server=[]
     for line in fr:
         c=c+1
-        if(c==407):
+        if(c==452):
             callback=genSub(fw,nameofTopic,interfacefile)
-        elif(c==410):
+        elif(c==455):
             gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata)
-        elif(c==79):
+        elif(c==80):
             fw.write("\r\rdef setup_var_protocol():\r\r")
             Idmsgg,nametopicc,interfacetopicc,dataTypee,dataNamee,datagrabb,NofDataa,datatypeProtocoll,bytetograbb=setup_var_protocol()
-            cal(get_params("Baudrate"),bytetograbb,NofDataa,nametopicc)
+            # cal(get_params("Baudrate"),bytetograbb,NofDataa,nametopicc)
             fw.write("    return "+str(Idmsgg)+","+str(nametopicc)+","+str(interfacetopicc)+","+str(dataTypee)+","+str(dataNamee)+","+str(datagrabb)+","+str(NofDataa)+","+str(datatypeProtocoll)+","+str(bytetograbb))
             fw.write("\r\r")
             Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut=setup_srv_protocol()
             fw.write("\r\rdef setup_srv_protocol():\r\r")
             fw.write("    return "+str(Idsrv)+","+str(namesrv)+","+str(interfacesrv)+","+str(dataType_srv_req)+","+str(dataName_srv_req)+","+str(datagrab_srv_req)+","+str(NofData_srv_req)+","+str(datatypeProtocol_srv_req)+","+str(bytetograb_srv_req)+","+str(dataType_srv_res)+","+str(dataName_srv_res)+","+str(datagrab_srv_res)+","+str(NofData_srv_res)+","+str(datatypeProtocol_srv_res)+","+str(bytetograb_srv_res)+","+str(timeOut))
+            Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut=setup_srv_server_protocol()
+            fw.write("\r\rdef setup_srv_server_protocol():\r\r")
+            fw.write("    return "+str(Idsrv)+","+str(namesrv)+","+str(interfacesrv)+","+str(dataType_srv_req)+","+str(dataName_srv_req)+","+str(datagrab_srv_req)+","+str(NofData_srv_req)+","+str(datatypeProtocol_srv_req)+","+str(bytetograb_srv_req)+","+str(dataType_srv_res)+","+str(dataName_srv_res)+","+str(datagrab_srv_res)+","+str(NofData_srv_res)+","+str(datatypeProtocol_srv_res)+","+str(bytetograb_srv_res)+","+str(timeOut))
             fw.write("\r\r")
-        elif(c==458):
+            Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,datagrab_action_req,NofData_action_req,datatypeProtocol_action_req,bytetograb_action_req,dataType_action_res,dataName_action_res,datagrab_action_res,NofData_action_res,datatypeProtocol_action_res,bytetograb_action_res,dataType_action_feed,dataName_action_feed,datagrab_action_feed,NofData_action_feed,datatypeProtocol_action_feed,bytetograb_action_feed,timeOut = setup_action_client_protocol()
+            fw.write("\r\rdef setup_action_client_protocol():\r\r")
+            fw.write("    return "+str(Idaction)+","+str(nameaction)+","+str(interfaceaction)+","+str(dataType_action_req)+","+str(dataName_action_req)+","+str(datagrab_action_req)+","+str(NofData_action_req)+","+str(datatypeProtocol_action_req)+","+str(bytetograb_action_req)+","+str(dataType_action_res)+","+str(dataName_action_res)+","+str(datagrab_action_res)+","+str(NofData_action_res)+","+str(datatypeProtocol_action_res)+","+str(bytetograb_action_res)+","+str(dataType_action_feed)+","+str(dataName_action_feed)+","+str(datagrab_action_feed)+","+str(NofData_action_feed)+","+str(datatypeProtocol_action_feed)+","+str(bytetograb_action_feed)+","+str(timeOut ))
+            fw.write("\r\r")
+            Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,datagrab_action_req,NofData_action_req,datatypeProtocol_action_req,bytetograb_action_req,dataType_action_res,dataName_action_res,datagrab_action_res,NofData_action_res,datatypeProtocol_action_res,bytetograb_action_res,dataType_action_feed,dataName_action_feed,datagrab_action_feed,NofData_action_feed,datatypeProtocol_action_feed,bytetograb_action_feed,timeOut = setup_action_server_protocol()
+            fw.write("\r\rdef setup_action_server_protocol():\r\r")
+            fw.write("    return "+str(Idaction)+","+str(nameaction)+","+str(interfaceaction)+","+str(dataType_action_req)+","+str(dataName_action_req)+","+str(datagrab_action_req)+","+str(NofData_action_req)+","+str(datatypeProtocol_action_req)+","+str(bytetograb_action_req)+","+str(dataType_action_res)+","+str(dataName_action_res)+","+str(datagrab_action_res)+","+str(NofData_action_res)+","+str(datatypeProtocol_action_res)+","+str(bytetograb_action_res)+","+str(dataType_action_feed)+","+str(dataName_action_feed)+","+str(datagrab_action_feed)+","+str(NofData_action_feed)+","+str(datatypeProtocol_action_feed)+","+str(bytetograb_action_feed)+","+str(timeOut ))
+            fw.write("\r\r")
+        elif(c==518):
             fw.write("    Idmcu = "+str(id_mcu)+"\n")
-        elif(c==10):
-            fw.write("# gen Import interfaces\n")
+        elif(c==12):
+            fw.write("# gen Import interfaces\r")
             genImport(fw)
-        elif(c==872):
+        elif(c==1166 or c==1032):
             fw.write("        self.Idmcu = "+str(id_mcu)+"\n")
-        elif(c==846):
-            fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")
+        elif(c==1006):
+            fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
+        elif(c==1415):
+            srv_server=genclassSrv_server(fw,id_mcu)
+        elif(c==1435):
+            action_server=genclassAction_server(fw,id_mcu)
+        elif(c==1424):
+            genSrv_server_spin(fw,srv_server)
+        elif(c==1444):
+            genAction_server_spin(fw,action_server)
         else:
             fw.write(line)
     return 1
 def addentrypoint():
     pathr= os.path.join(gPath(0), 'CMakeLists.txt')
-    f=open(pathr, 'r+')
+    f=open(pathr, 'r+') 
     entryp=[]
-
+   
     for line in f:
         entryp.append(line)
-
+    
 
 
     entrystring="  scripts/"+"xicro_node_"+get_params("Namespace")+"_ID_"+str(get_params("Idmcu"))+'_'+sys.argv[1]+'.py\n'
@@ -730,7 +1582,7 @@ def addentrypoint():
 
     return 1
 
-
+        
 def main():
     flagargs=0
     try:

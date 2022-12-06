@@ -3,7 +3,11 @@ Namespace: "demo"
 Port: "/dev/ttyACM0"
 generate_library_Path: "arduino/libraries"
 Baudrate: 57600
-Setup_Publisher:  [         [1,"imu_arduino","interactive_arduino/Imu6DOF.msg"],[2,"input_arduino","interactive_arduino/DemoShieldInput.msg"]        ]
-Setup_Subscriber: [         [1,"output_arduino","interactive_arduino/DemoShieldOutput.msg"]   ]
-Setup_Srv_client: [         ]
+Setup_Publisher:  [                           ]
+Setup_Subscriber: [                           ]
+Setup_Srv_client: [                           ]
+Setup_Srv_server: [                           ]
+Setup_Action_client: [                        ]
+Setup_Action_server: [                        ]
 
+ 
