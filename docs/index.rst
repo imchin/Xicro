@@ -8,7 +8,5 @@
 .. toctree::
    :maxdepth: 1
    :caption: USER GUIDE
-
-
-  Installation.rst
+   Installation.rst
 
