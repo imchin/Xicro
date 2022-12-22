@@ -6,7 +6,8 @@
 * Using the same principle as rosserial, we come up with "xicro" (not to be confused with "xacro"). xicro allows the developers to use the generated libraries for the microcontrollers as well as auto-generated node that intrepreter information from/to the microcontrollers via UART.
 
 .. toctree::
-   :maxdepth: 1
-   :caption: USER GUIDE
-   Installation.rst
+      :maxdepth: 1
+      :caption: Getting Started
+      
+      Installation.rst
 
