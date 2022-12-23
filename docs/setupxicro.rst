@@ -1,4 +1,4 @@
-Step to use
+Setup Xicro
 ===========
 
 

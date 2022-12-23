@@ -10,4 +10,4 @@ Xicro
       :caption: Getting Started
 
       installation.rst
-      steptouse.rst
+      setupxicro.rst
