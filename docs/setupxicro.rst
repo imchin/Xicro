@@ -94,7 +94,7 @@ setup_xicro.yaml is contain
         Is contain 2 part in format 
 
         
-            "(The name of the package that contains the interface file)/(Name_of_fileinterface).srv" 
+            "(The name of the package that contains the interface file)/(Name_of_fileinterface).action" 
     4. time_out : Limit the maximum action usage time. (In type float)        
       
 11. Setup_Action_server : Configuration for action server. 
@@ -108,7 +108,7 @@ setup_xicro.yaml is contain
         Is contain 2 part in format 
 
         
-            "(The name of the package that contains the interface file)/(Name_of_fileinterface).srv" 
+            "(The name of the package that contains the interface file)/(Name_of_fileinterface).action" 
     4. time_out : Limit the maximum action usage time. (In type float)        
       
 When setting up the system as desired, run colcon build.
