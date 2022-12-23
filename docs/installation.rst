@@ -1,9 +1,9 @@
 Installation Guide
-========
+==================
 
 
 Download
-************
+********
 Simply download this "metapackage_" to your workspace and build it.
 
 
