@@ -1448,7 +1448,7 @@ def genclassSrv_server(fw,id_mcu):
         srv_server.append("Srv_server_"+namesrv[i]+"_node")
         fw.write("\nclass Srv_server_"+namesrv[i]+"_node(Node):\r")
         fw.write("    def __init__(self,Obj_uart):\n")
-        fw.write("        super().__init__('xicro_"+srv_server[i].lower()+"')\n")
+        fw.write("        super().__init__('xicro_"+get_params("Namespace").lower()+"_"+srv_server[i].lower()+"')\n")
         fw.write("        self.Obj_uart=Obj_uart\n")
         fw.write("        self.xicro_instruction = Xicro_instruction(self.Obj_uart)\n")
         fw.write("        self.timeout = "+str(timeOut[i])+"\n")
@@ -1464,7 +1464,7 @@ def genclassAction_server(fw,id_mcu):
         action_server.append("Action_server_"+nameaction_server[i]+"_node")
         fw.write("\nclass Action_server_"+nameaction_server[i]+"_node(Node):\r")
         fw.write("    def __init__(self,Obj_uart):\n")
-        fw.write("        super().__init__('xicro_"+nameaction_server[i].lower()+"_node')\n")
+        fw.write("        super().__init__('xicro_"+get_params("Namespace").lower()+"_"+nameaction_server[i].lower()+"_node')\n")
         fw.write("        self.Obj_uart=Obj_uart\n")
         fw.write("        self.xicro_instruction = Xicro_instruction(self.Obj_uart)\n")
         fw.write("        self.timeout = "+str(timeOut_action_server[i])+"\n")
@@ -1551,6 +1551,14 @@ def gennerate():
             genSrv_server_spin(fw,srv_server)
         elif(c==1444):
             genAction_server_spin(fw,action_server)
+        elif(c==117):
+            fw.write("        super().__init__('xicro_publisher_node_"+get_params("Namespace").lower()+"')\n" )
+        elif(c==446):
+            fw.write("        super().__init__('xicro_subscriber_node_"+get_params("Namespace").lower()+"')\n" )
+        elif(c==1030):
+            fw.write("        super().__init__('xicro_service_client_node_"+get_params("Namespace").lower()+"_'+str(sequence))")
+        elif(c==1164):
+            fw.write("        super().__init__('xicro_action_client_node_"+get_params("Namespace").lower()+"_'+str(sequence))")
         else:
             fw.write(line)
     return 1
