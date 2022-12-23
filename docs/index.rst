@@ -11,3 +11,4 @@ Xicro
 
       installation.rst
       setupxicro.rst
+      xicrolibraryapi.rst
