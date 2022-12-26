@@ -4,11 +4,36 @@ class Xicro{
         Xicro();
         void begin(Stream *SerialObject);
         void Spin_node();void Test();
+        // gen struct
         
-    
 
+
+
+
+        struct{
+            uint8_t server_not_response = 252;
+            uint8_t server_return_none = 253;
+            uint8_t get_response_done = 2;
+            uint8_t client_request_done = 1;
+            uint8_t initstate = 0;
+        } service_client_state;
+
+        
+
+        struct{
+            uint8_t client_request_done = 1;
+            uint8_t goal_accept = 95;
+            uint8_t goal_reject = 96;
+            uint8_t incoming_feedback = 2;
+            uint8_t get_result_done = 2;
+            uint8_t server_return_none = 253;
+            uint8_t initstate = 0;
+            uint8_t server_not_response = 252;
+            uint8_t time_out = 97;
+        } action_client_state;
     // get    
     private:
+        // gen id mcu
 
         Stream* _serial;
         uint8_t _getcrc(uint8_t crc,uint8_t *data,uint16_t len);
