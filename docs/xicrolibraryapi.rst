@@ -206,7 +206,7 @@ The generated function will have the pattern void begin_service_server(void* ser
 
      
     .. image:: pic/function_srv_server_response.png
-        :width: 300
+        :width: 350
         :height: 50
         :alt: Alternative text
         :align: center
@@ -236,7 +236,7 @@ How to implement xicro library in this mode
 
     The generated struct will have the pattern 
         1. Action_client\_(Name_of_Action).request.(data request in interface file)
-        2. Action_client\_(Name_of_Action).response.(data response in interface file)
+        2. Action_client\_(Name_of_Action).result.(data response in interface file)
         3. Action_client\_(Name_of_Action).feedback.(data feedback in interface file)
         4. Action_client\_(Name_of_Action).state is state of action client (only xicro)
 
@@ -263,12 +263,10 @@ The generated function will have the pattern action_client_call\_(Name_of_Action
         :alt: Alternative text
         :align: center
 
-4. When the service call is done, check by state if state==get_response_done .
+4. When the action call is done, check by state 
 
-    The data will be updated in this struct.response ,struct.feedback and can be used immediately.
-
-
-
+    The data will be updated in this struct.result ,struct.feedback and can be used immediately.
+    
 Action server
 *************
 
