@@ -9,6 +9,7 @@ Xicro
       :maxdepth: 1
       :caption: Getting Started
 
+      abstract .rst
       installation.rst
       setupxicro.rst
       xicrolibraryapi.rst

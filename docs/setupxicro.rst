@@ -171,3 +171,18 @@ argv2  : HAL library
         ros2 run xicro_pkg generate_library.py arduino  // Exmaple generate for arduino family.
         ros2 run xicro_pkg generate_library.py esp  // Exmaple generate for esp family.
 
+
+Use it together
+***************
+1. Upload code to microcontroller
+2. Connect microcontroller to computer
+3. check permission port open
+    .. code-block:: sh
+
+        sudo chown $USERNAME /port     #Changing permissions port 
+
+4. run xicro_node that was previously created.
+
+    .. code-block:: sh
+
+        ros2 run xicro_pkg xicro_xxx_node  
