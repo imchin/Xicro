@@ -16,7 +16,7 @@ The xicro library has to be set up.
 
 1. Declare the object xicro before calling Void Setup(). 
 
-    .. image:: pic/declare.png
+    .. image:: pic/declare_2.png
         :width: 420
         :height: 120
         :alt: Alternative text
@@ -292,7 +292,7 @@ How to implement xicro library in this mode
     The generated struct will have the pattern 
         1. Action_server\_(Name_of_Action).request.(data request in interface file)
         2. Action_server\_(Name_of_Action).result.(data response in interface file)
-        3. Action_client\_(Name_of_Action).feedback.(data feedback in interface file)
+        3. Action_server\_(Name_of_Action).feedback.(data feedback in interface file)
         4. Action_server\_(Name_of_Action).state is state of action server (only xicro)
 
 1. The first step is to register by entering the address of the void.
