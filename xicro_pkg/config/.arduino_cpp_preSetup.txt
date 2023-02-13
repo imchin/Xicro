@@ -15,7 +15,7 @@ uint8_t Xicro::_getcrc(uint8_t crc,uint8_t *data,uint16_t len){
         for (int i = 0; i < len; i++){
         crc = _CRC_8_TABLE[crc ^ data[i]];
         }
-    }else{
+    }else if(len!=0){
         crc = _CRC_8_TABLE[crc ^ (uint8_t)*data];
     }
     
