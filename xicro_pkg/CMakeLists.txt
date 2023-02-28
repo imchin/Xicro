@@ -27,7 +27,6 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scripts/gui_xicro.py
 #xicro
   scripts/generate_library.py
   scripts/generate_xicro_node.py

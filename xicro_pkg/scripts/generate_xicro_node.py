@@ -1539,25 +1539,25 @@ def gennerate():
         elif(c==12):
             fw.write("# gen Import interfaces\n")
             genImport(fw)
-        elif(c==1166 or c==1032):
+        elif(c==1172 or c==1038):
             fw.write("        self.Idmcu = "+str(id_mcu)+"\n")
-        elif(c==1006):
+        elif(c==1009):
             fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
-        elif(c==1415):
+        elif(c==1421):
             srv_server=genclassSrv_server(fw,id_mcu)
-        elif(c==1435):
+        elif(c==1441):
             action_server=genclassAction_server(fw,id_mcu)
-        elif(c==1424):
+        elif(c==1430):
             genSrv_server_spin(fw,srv_server)
-        elif(c==1444):
+        elif(c==1450):
             genAction_server_spin(fw,action_server)
         elif(c==117):
             fw.write("        super().__init__('xicro_publisher_node_"+get_params("Namespace").lower()+"')\n" )
         elif(c==446):
             fw.write("        super().__init__('xicro_subscriber_node_"+get_params("Namespace").lower()+"')\n" )
-        elif(c==1030):
+        elif(c==1036):
             fw.write("        super().__init__('xicro_service_client_node_"+get_params("Namespace").lower()+"_'+str(sequence))")
-        elif(c==1164):
+        elif(c==1170):
             fw.write("        super().__init__('xicro_action_client_node_"+get_params("Namespace").lower()+"_'+str(sequence))")
         else:
             fw.write(line)

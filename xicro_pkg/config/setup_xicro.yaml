@@ -1,13 +1,12 @@
-Idmcu: 3
-Namespace: "demo"
+Idmcu: 1
+Namespace: "xxx"
 Port: "/dev/ttyACM0"
 generate_library_Path: "arduino/libraries"
-Baudrate: 57600
+Baudrate: 57620
 Setup_Publisher:  [                           ]
 Setup_Subscriber: [                           ]
-Setup_Srv_client: [         [1,"add_two_ints","example_interfaces/AddTwoInts.srv",5.00]          ]
-Setup_Srv_server: [         [1,"add_two_ints_arduino","example_interfaces/AddTwoInts.srv",10.00] ]
+Setup_Srv_client: [                           ]
+Setup_Srv_server: [                           ]
 Setup_Action_client: [                        ]
 Setup_Action_server: [                        ]
 
- 

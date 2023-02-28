@@ -478,7 +478,7 @@ def Receive_uart(Obj_uart): #processer 1
             Obj_uart.Buff[Obj_uart.index.value]=(int.from_bytes(s, byteorder="big",signed=0) )
             Obj_uart.index.value = (Obj_uart.index.value + 1 )%1000
         except:
-            1
+            Obj_uart.ser = Obj_uart.check_port_open(Obj_uart.port)
 
 def Protocol_XicroToRos_spin(Obj_uart,ModeEx,checkIdOn,sh_res,st_index,sh_res_2): #processer 3,5,srv_server_res
 
@@ -928,6 +928,9 @@ def Protocol_XicroToRos_spin(Obj_uart,ModeEx,checkIdOn,sh_res,st_index,sh_res_2)
                     if(ModeEx==3):
                         print("pipe_action_client["+str(r_pipe)+"].join Done")
                 r_pipe=(r_pipe+1)%16
+            
+
+
 
         except:
             print("Protocol recovery.")
@@ -1022,8 +1025,11 @@ def Transmit_uart(Obj_uart): #processer 2
     print("Start Transmit Uart : "+ Obj_uart.port)
     while(1):
         if(len(Obj_uart.Buff_SSend)>0):
-            Obj_uart.ser.write(bytearray(Obj_uart.Buff_SSend[0]))
-            Obj_uart.Buff_SSend.pop(0)
+            try:
+                Obj_uart.ser.write(bytearray(Obj_uart.Buff_SSend[0]))
+                Obj_uart.Buff_SSend.pop(0)
+            except:
+                Obj_uart.ser = Obj_uart.check_port_open(Obj_uart.port)
 
 class Srv_client_node(Node):
     def __init__(self,Obj_uart,OnIdsrv,Ongrab,sequence):
@@ -1453,45 +1459,50 @@ def Action_server_xicro_spin(Obj_uart):
 
 def main():
     try:
-        
+
 
         Obj_uart = Uart(mp)    # create Uart object
 
-        p  = mp.Process(target=Receive_uart,args=(Obj_uart,))
-        p2 = mp.Process(target=Transmit_uart,args=(Obj_uart,))
-        p3 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,0,888,888,888,888,))   # Spin pub
-        p4 = mp.Process(target=Protocol_RosToXicro_spin,args=(Obj_uart,))                     # Spin callback sub
-        p5 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,1,888,888,888,888,))   # Spin srv Client
-        p6 = mp.Process(target=Service_server_xicro_spin,args=(Obj_uart,))                    # Spin service server 
-        p7 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,3,888,888,888,888,))   # Spin action Client
-        p8 = mp.Process(target=Action_server_xicro_spin,args=(Obj_uart,))                     # Spin action server 
+        if(Obj_uart.ser!=0):
+            p  = mp.Process(target=Receive_uart,args=(Obj_uart,))
+            p2 = mp.Process(target=Transmit_uart,args=(Obj_uart,))
+            p3 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,0,888,888,888,888,))   # Spin pub
+            p4 = mp.Process(target=Protocol_RosToXicro_spin,args=(Obj_uart,))                     # Spin callback sub
+            p5 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,1,888,888,888,888,))   # Spin srv Client
+            p6 = mp.Process(target=Service_server_xicro_spin,args=(Obj_uart,))                    # Spin service server 
+            p7 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,3,888,888,888,888,))   # Spin action Client
+            p8 = mp.Process(target=Action_server_xicro_spin,args=(Obj_uart,))                     # Spin action server 
 
-        p.start()
-        p2.start()
-        p3.start()
-        p4.start()
-        p5.start()
-        p6.start()
-        p7.start()
-        p8.start()
+            p.start()
+            p2.start()
+            p3.start()
+            p4.start()
+            p5.start()
+            p6.start()
+            p7.start()
+            p8.start()
 
-        while(1):
-            1
+            while(1):
+                1
+
 
     except KeyboardInterrupt:
-        p.terminate()
-        p2.terminate()
-        p3.terminate()
-        p4.terminate()
-        p5.terminate()
-        p6.terminate()
-        p7.terminate()
-        p8.terminate()
+        if(Obj_uart.ser!=0):
+            p.kill()
+            p2.kill()
+            p3.kill()
+            p4.kill()
+            p5.kill()
+            p6.kill()
+            p7.kill()
+            p8.kill()
+
 
     finally:
-        print("Xicro all process is shutdown.")
+        print("\n\nXicro all process is shutdown.")
 if __name__ == '__main__':
     main()
+
 
 
 
