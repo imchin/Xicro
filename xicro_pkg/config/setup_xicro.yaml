@@ -1,12 +1,20 @@
-Idmcu: 1
-Namespace: "xxx"
-Port: "/dev/ttyACM0"
-generate_library_Path: "arduino/libraries"
-Baudrate: 57620
-Setup_Publisher:  [                           ]
-Setup_Subscriber: [                           ]
-Setup_Srv_client: [                           ]
-Setup_Srv_server: [                           ]
-Setup_Action_client: [                        ]
-Setup_Action_server: [                        ]
+microcontroller:
+  idmcu: 1 # id of mcu 
+  namespace: "xxx" # namespace
+  generate_library_Path: "arduino/libraries"  # path for generate library
+  connection:
+    type: "UDP"   # ["UART","UDP"] support 2 mode 1.Serial UART 2.Wifi UDP (Only arduino and esp32)
+    serial_port: "/dev/ttyACM0"  # for Serial UART example "/dev/ttyUSB0"
+    baudrate: 57620  # for UART
+    ip_address_mcu: ""  # for UDP example "192.168.1.xx"
+    udp_port_mcu: 8888  # for UDP
+
+
+ros: # setup ros is reference from microcontroller example publisher is mean microcontroller publish to ros network
+  publisher:  [                           ]
+  subscriber: [                           ]
+  srv_client: [                           ]
+  srv_server: [                           ]
+  action_client: [                        ]
+  action_server: [                        ]
 

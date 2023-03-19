@@ -8,11 +8,12 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 import numpy as np
-import serial
-from xicro_interfaces.msg import *
+!#@ gen_import_module_connection
+!#@ gen_import_interface
 import struct
 import time
 import multiprocessing as mp
+import argparse
 import sys
 
 
@@ -77,7 +78,7 @@ def typetoProtocol(typee,Nofdata):
         return ans+1,Nofbyte
 
 # gen setup
-
+!#@ gen_setup_function
 def create_N_topic(self,name,interfaces):
     try:
         for i in range (0,len(interfaces)):
@@ -114,7 +115,7 @@ def bufferToType(BUFFER,Typee):
 class Publisher_node(Node):
 
     def __init__(self):
-        super().__init__('xicro_publisher_node')
+!#@ gen_name_of_publisher_node
         self.Idmsg , self.nametopic ,  self.interfaceTopic ,self.dataType , self.dataName ,self.datagrab ,self.Nofdata,self.Protocoltype,self.byteTograb= setup_var_protocol()
         # print(self.Idmsg , self.nametopic ,  self.interfaceTopic ,self.dataType , self.dataName ,self.datagrab ,self.Nofdata)
         self.emptydatagrab=self.datagrab.copy()
@@ -443,16 +444,16 @@ class Xicro_instruction():
 
 class Subscriber_node(Node):
     def __init__(self,Obj_uart):
-        super().__init__('xicro_subscriber_node')
+!#@ gen_name_of_subscriber_node
         self.Obj_uart = Obj_uart
         self.xicro_instruction = Xicro_instruction(self.Obj_uart)
         time.sleep(1)
 
         # gen sub
-
+!#@ gen_sub
 
     # gen callback sub
-
+!#@ gen_callback_sub
 
 
 
@@ -468,17 +469,9 @@ def select_pipe(obj_pipe):
             return i
     return None
 
+!#@ gen_def_receive_uart
 
-def Receive_uart(Obj_uart): #processer 1
-    print("Start Receive Uart : "+ Obj_uart.port)
-    while(1):
-        # Obj_uart.count.value=Obj_uart.count.value+1
-        try:
-            s = Obj_uart.ser.read()
-            Obj_uart.Buff[Obj_uart.index.value]=(int.from_bytes(s, byteorder="big",signed=0) )
-            Obj_uart.index.value = (Obj_uart.index.value + 1 )%1000
-        except:
-            Obj_uart.ser = Obj_uart.check_port_open(Obj_uart.port)
+
 
 def Protocol_XicroToRos_spin(Obj_uart,ModeEx,checkIdOn,sh_res,st_index,sh_res_2): #processer 3,5,srv_server_res
 
@@ -515,7 +508,7 @@ def Protocol_XicroToRos_spin(Obj_uart,ModeEx,checkIdOn,sh_res,st_index,sh_res_2)
     Idaction_server,nameaction_server,interfaceaction_server,dataType_action_server_req,dataName_action_server_req,datagrab_action_server_req,NofData_action_server_req,datatypeProtocol_action_server_req,bytetograb_action_server_req,dataType_action_server_res,dataName_action_server_res,datagrab_action_server_res,NofData_action_server_res,datatypeProtocol_action_server_res,bytetograb_action_server_res,dataType_action_server_feed,dataName_action_server_feed,datagrab_action_server_feed,NofData_action_server_feed,datatypeProtocol_action_server_feed,bytetograb_action_server_feed,timeOut_action_server = setup_action_server_protocol()
     r_pipe=0
     # gen Id
-
+!#@ gen_id_mcu
     OnIdsrv=0
     OnMode=0
     OnIdmsg=0
@@ -994,26 +987,13 @@ class Uart():
         self.mana = mp.Manager()
         self.Buff_SSend = self.mana.list()
 
-        try:
-            self.port = sys.argv[1]
-            print("Input new arg  is :"+self.port)
-        except:
-            self.port ="/dev/ttyACM0"
-            print("Input arg Port use is :"+self.port)
+!#@ gen_setup_arg
 
-        self.ser = self.check_port_open(self.port)
 
-    def check_port_open(self,Port):
-        try:
-            # gen port
-            ser = serial.Serial(Port,115200, timeout=1000 ,stopbits=1)
-            print(Port + ': port is Open.')
+        self.ser = self.check_port_open()
 
-            return ser
-        except:
-            print(Port + ': open port Fail.')
+!#@ gen_def_check_port_open
 
-        return 0
 
     def queue_Send(self,send_ll):
 
@@ -1022,20 +1002,20 @@ class Uart():
         return 1
 
 def Transmit_uart(Obj_uart): #processer 2
-    print("Start Transmit Uart : "+ Obj_uart.port)
+    print("Start Transmit Xicro_Protocol")
     while(1):
         if(len(Obj_uart.Buff_SSend)>0):
             try:
-                Obj_uart.ser.write(bytearray(Obj_uart.Buff_SSend[0]))
+!#@ gen_Tx_type
                 Obj_uart.Buff_SSend.pop(0)
             except:
-                Obj_uart.ser = Obj_uart.check_port_open(Obj_uart.port)
+                Obj_uart.ser = Obj_uart.check_port_open()
 
 class Srv_client_node(Node):
     def __init__(self,Obj_uart,OnIdsrv,Ongrab,sequence):
-        super().__init__('xicro_service_client_node_'+str(sequence))
+!#@ gen_name_of_srv_client_node
         # gen Id mcu
-        
+!#@ gen_self_id_mcu
         self.Obj_uart = Obj_uart
         self.xicro_instruction = Xicro_instruction(self.Obj_uart)
         self.Ongrab=Ongrab
@@ -1138,7 +1118,7 @@ class Srv_client_node(Node):
             self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),1,cond)
         elif(datatype=="bool" and Nofdata!=1):
             self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),Nofdata,cond)
-        elif(datatype=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
+        elif(datatype=="float64" and ( MCU_TYPE =="arduino" or MCU_TYPE =="esp" )):
             self.xicro_instruction._SendFloat32(self._getdata(obj_res,dataname),Nofdata)
         elif(datatype=="float64"):
             self.xicro_instruction._SendFloat64(self._getdata(obj_res,dataname),Nofdata)
@@ -1167,9 +1147,9 @@ class Srv_client_node(Node):
 
 class Action_client_node(Node):
     def __init__(self,Obj_uart,OnIdaction,Ongrab,sequence):
-        super().__init__('xicro_action_client_node_'+str(sequence))
+!#@ gen_name_of_action_client_node
         # gen Id mcu
-        
+!#@ gen_self_id_mcu
         self.Obj_uart = Obj_uart
         self.xicro_instruction = Xicro_instruction(self.Obj_uart)
         self.Ongrab=Ongrab
@@ -1267,7 +1247,7 @@ class Action_client_node(Node):
             self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),1,cond)
         elif(datatype=="bool" and Nofdata!=1):
             self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),Nofdata,cond)
-        elif(datatype=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
+        elif(datatype=="float64" and ( MCU_TYPE =="arduino" or MCU_TYPE =="esp" )):
             self.xicro_instruction._SendFloat32(self._getdata(obj_res,dataname),Nofdata)
         elif(datatype=="float64"):
             self.xicro_instruction._SendFloat64(self._getdata(obj_res,dataname),Nofdata)
@@ -1418,7 +1398,7 @@ def Protocol_Srv_client_spin(Obj_uart,OnIdsrv,Ongrab,sequence):   # processer n 
 
 
 # gen service_server
-
+!#@ gen_service_server
 
 
 
@@ -1427,7 +1407,7 @@ def Service_server_xicro_spin(Obj_uart):
     executor = MultiThreadedExecutor(num_threads=6)
     print("RostoXicro_spin Srv server")
     # gen srv_server_To_spin
-   
+!#@ gen_service_server_spin
     try:
         executor.spin()
     finally:
@@ -1438,7 +1418,7 @@ def Service_server_xicro_spin(Obj_uart):
     return 1
 
 # gen action server
-
+!#@ gen_action_server
 
 
 
@@ -1447,7 +1427,7 @@ def Action_server_xicro_spin(Obj_uart):
     executor = MultiThreadedExecutor(num_threads=6)
     print("RostoXicro_spin Action server")
     # gen action_server_To_spin
-
+!#@ gen_action_server_spin
     try:
         executor.spin()
     finally:
@@ -1455,12 +1435,18 @@ def Action_server_xicro_spin(Obj_uart):
         rclpy.shutdown()
 
     return 1
+def set_args():
+    global MCU_TYPE
+!#@ gen_mcu_type
+    global input
+    input = argparse.ArgumentParser()
+!#@ gen_input_arg
+    input = input.parse_args()
 
 
 def main():
     try:
-
-
+        set_args()
         Obj_uart = Uart(mp)    # create Uart object
 
         if(Obj_uart.ser!=0):

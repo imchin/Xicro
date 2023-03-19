@@ -1,10 +1,14 @@
+!#@ gen_define
 
 Xicro::Xicro(){
 }
-void Xicro::begin(Stream *SerialObject){
-    _serial=SerialObject;
-   
 
+!#@ gen_void_head_begin_cpp
+
+
+    _serial=SerialObject;
+    // gen_void_begin
+!#@ gen_void_begin
   
   
 
@@ -23,36 +27,37 @@ uint8_t Xicro::_getcrc(uint8_t crc,uint8_t *data,uint16_t len){
 }
 
 void Xicro::_Sendstart(){
-    _serial->write(_start,4);
+!#@ gen_start_pack_udp
+    __SEND_UART(_start,4);
 }
 void Xicro::_Sendstop(){
     _crc=_getcrc(_crc,_stop,2);
-    _serial->write(_stop,2);
+    __SEND_UART(_stop,2);
 }
 void Xicro::_Sendcontinue(){
     _crc=_getcrc(_crc,_continue,2);
-    _serial->write(_continue,2);
+    __SEND_UART(_continue,2);
 }
 void Xicro::_SendSignature(uint8_t Idmcu,uint8_t Mode){
    uint8_t q[1]={0};
    q[0]=Idmcu<<4;
    q[0]=q[0]|Mode;
    _crc=_getcrc(_crc, &q[0],1);
-   _serial->write(q,1);
+   __SEND_UART(q,1);
 }
 void Xicro::_SendUint8(uint8_t *data,uint8_t len){
     if(len>1){
         uint8_t buff[2]={9,0};
         buff[1]=len & 0xFF;
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         _crc=_getcrc(_crc,buff,2);
         _crc=_getcrc(_crc,data,len);
-        _serial->write(data,len);
+        __SEND_UART(data,len);
     }else{
         uint8_t buff[2]={8,0};
         buff[1]=(uint8_t)*data & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
     }
     
 
@@ -63,7 +68,7 @@ void Xicro::_SendUint16(uint16_t *data,uint8_t len){
         uint8_t buff[2]={17,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*2)+1] = (uint16_t)data[i] >> 0 & 0xFF;
@@ -71,14 +76,14 @@ void Xicro::_SendUint16(uint16_t *data,uint8_t len){
             
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        __SEND_UART(sp,sizee);
 
     }else{
         uint8_t buff[3]={16,0,0};
         buff[2] = (uint16_t)*data >> 0 & 0xFF;
         buff[1] = (uint16_t)*data >> 8 & 0xFF;
         _crc=_getcrc(_crc,buff,3);
-        _serial->write(buff,3);
+        __SEND_UART(buff,3);
     }
     
 }
@@ -89,7 +94,7 @@ void Xicro::_SendUint32(uint32_t *data,uint8_t len){
         uint8_t buff[2]={33,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*4)+3] = (uint32_t)data[i] >> 0 & 0xFF;
@@ -98,7 +103,7 @@ void Xicro::_SendUint32(uint32_t *data,uint8_t len){
             sp[(i*4)]   = (uint32_t)data[i] >> 24 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        __SEND_UART(sp,sizee);
 
     }else{
         uint8_t buff[5]={32,0,0,0,0};
@@ -107,7 +112,7 @@ void Xicro::_SendUint32(uint32_t *data,uint8_t len){
         buff[2] = (uint32_t)*data >> 16 & 0xFF;
         buff[1] = (uint32_t)*data >> 24 & 0xFF;
         _crc=_getcrc(_crc,buff,5);
-        _serial->write(buff,5);
+        __SEND_UART(buff,5);
         
     }
 }
@@ -117,7 +122,7 @@ void Xicro::_SendUint64(uint64_t *data,uint8_t len){
         uint8_t buff[2]={65,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*8)+7] = (uint64_t)data[i] >> 0  & 0xFF;
@@ -130,7 +135,7 @@ void Xicro::_SendUint64(uint64_t *data,uint8_t len){
             sp[(i*8)]   = (uint64_t)data[i] >> 56 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        __SEND_UART(sp,sizee);
 
     }else{
         uint8_t buff[9]={64,0,0,0,0,0,0,0,0};
@@ -143,7 +148,7 @@ void Xicro::_SendUint64(uint64_t *data,uint8_t len){
         buff[2] = (uint64_t)*data >> 48 & 0xFF;
         buff[1] = (uint64_t)*data >> 56 & 0xFF;
         _crc=_getcrc(_crc,buff,9);
-        _serial->write(buff,9);
+        __SEND_UART(buff,9);
         
     }
 }
@@ -151,15 +156,15 @@ void Xicro::_SendInt8(int8_t *data,uint8_t len){
     if(len>1){
         uint8_t buff[2]={19,0};
         buff[1]=len & 0xFF;
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         _crc=_getcrc(_crc,buff,2);       
         _crc=_getcrc(_crc,(uint8_t*)data,len);
-        _serial->write((uint8_t*)data,len);
+        __SEND_UART((uint8_t*)data,len);
     }else{
         uint8_t buff[2]={18,0};
         buff[1]=(uint8_t)*data & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
     }
 }
 void Xicro::_SendInt16(int16_t *data,uint8_t len){
@@ -168,7 +173,7 @@ void Xicro::_SendInt16(int16_t *data,uint8_t len){
         uint8_t buff[2]={117,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*2)+1] = (uint16_t)data[i] >> 0 & 0xFF;
@@ -176,14 +181,14 @@ void Xicro::_SendInt16(int16_t *data,uint8_t len){
             
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        __SEND_UART(sp,sizee);
 
     }else{
         uint8_t buff[3]={116,0,0};
         buff[2] = (uint16_t)*data >> 0 & 0xFF;
         buff[1] = (uint16_t)*data >> 8 & 0xFF;
         _crc=_getcrc(_crc,buff,3);
-        _serial->write(buff,3);
+        __SEND_UART(buff,3);
     }
 }
 void Xicro::_SendInt32(int32_t *data,uint8_t len){
@@ -192,7 +197,7 @@ void Xicro::_SendInt32(int32_t *data,uint8_t len){
         uint8_t buff[2]={133,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*4)+3] = (uint32_t)data[i] >> 0 & 0xFF;
@@ -201,7 +206,7 @@ void Xicro::_SendInt32(int32_t *data,uint8_t len){
             sp[(i*4)]   = (uint32_t)data[i] >> 24 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        __SEND_UART(sp,sizee);
 
     }else{
         uint8_t buff[5]={132,0,0,0,0};
@@ -210,7 +215,7 @@ void Xicro::_SendInt32(int32_t *data,uint8_t len){
         buff[2] = (uint32_t)*data >> 16 & 0xFF;
         buff[1] = (uint32_t)*data >> 24 & 0xFF;
         _crc=_getcrc(_crc,buff,5);
-        _serial->write(buff,5);
+        __SEND_UART(buff,5);
     }
 }
 void Xicro::_SendInt64(int64_t *data,uint8_t len){
@@ -219,7 +224,7 @@ void Xicro::_SendInt64(int64_t *data,uint8_t len){
         uint8_t buff[2]={165,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         uint8_t sp[sizee];
         for (int i=0;i<len;i++){
             sp[(i*8)+7] = (uint64_t)data[i] >> 0  & 0xFF;
@@ -232,7 +237,7 @@ void Xicro::_SendInt64(int64_t *data,uint8_t len){
             sp[(i*8)]   = (uint64_t)data[i] >> 56 & 0xFF;     
         }
         _crc=_getcrc(_crc,sp,sizee);
-        _serial->write(sp,sizee);
+        __SEND_UART(sp,sizee);
 
     }else{
         uint8_t buff[9]={164,0,0,0,0,0,0,0,0};
@@ -245,7 +250,7 @@ void Xicro::_SendInt64(int64_t *data,uint8_t len){
         buff[2] = (uint64_t)*data >> 48 & 0xFF;
         buff[1] = (uint64_t)*data >> 56 & 0xFF;
         _crc=_getcrc(_crc,buff,9);
-        _serial->write(buff,9);
+        __SEND_UART(buff,9);
         
     }
 }
@@ -254,11 +259,11 @@ void Xicro::_SendFloat32(float *data,uint8_t len){
         uint8_t buff[2]={112,0};
         buff[1]=len & 0xFF;
         _crc=_getcrc(_crc,buff,2);
-        _serial->write(buff,2);
+        __SEND_UART(buff,2);
         for(int i=0;i<len;i++){
             byte * bb = (byte *) &data[i];
             _crc=_getcrc(_crc,bb,4);
-            _serial->write(bb,4);
+            __SEND_UART(bb,4);
         }
 
     }else{
@@ -266,23 +271,23 @@ void Xicro::_SendFloat32(float *data,uint8_t len){
         uint8_t buff[1]={111};
         _crc=_getcrc(_crc,&buff[0],1);
         _crc=_getcrc(_crc,bb,4);
-        _serial->write(buff,1);
-        _serial->write(bb,4);
+        __SEND_UART(buff,1);
+        __SEND_UART(bb,4);
     }
     
 }
-void Xicro::_SendString(String *data,uint8_t len){
+void Xicro::_SendString(__STR_TYPE *data,uint8_t len){
     uint8_t buffE[2]={42,126};
     if(len>1){
         uint8_t buffS[2]={243,0};
         buffS[1]=len & 0xFF;
         _crc=_getcrc(_crc,buffS,2);
-        _serial->write(buffS,2);
+        __SEND_UART(buffS,2);
         for(int j=0;j<len;j++){
             _crc=_getcrc(_crc,(uint8_t*)&data[j][0],data[j].length());
             _crc=_getcrc(_crc,buffE,2);
-            _serial->write((uint8_t*)&data[j][0],data[j].length());
-            _serial->write(buffE,2);
+            __SEND_UART((uint8_t*)&data[j][0],data[j].length());
+            __SEND_UART(buffE,2);
         }
 
     }else{
@@ -290,9 +295,9 @@ void Xicro::_SendString(String *data,uint8_t len){
         _crc=_getcrc(_crc,&buffS[0],1);
         _crc=_getcrc(_crc,(uint8_t*)&data[0][0],data[0].length());
         _crc=_getcrc(_crc,buffE,2);
-        _serial->write(buffS,1);
-        _serial->write((uint8_t*)&data[0][0],data[0].length());
-        _serial->write(buffE,2);
+        __SEND_UART(buffS,1);
+        __SEND_UART((uint8_t*)&data[0][0],data[0].length());
+        __SEND_UART(buffE,2);
     }
     
 
@@ -322,7 +327,7 @@ void Xicro::_SendBool(bool *data,uint8_t len,bool flagNext){ //flagnext=1=contin
             
         }
         _crc=_getcrc(_crc,buff,sizee);
-        _serial->write(buff,sizee);
+        __SEND_UART(buff,sizee);
 
     }else{
         uint8_t buff[3]={88,0,0};
@@ -344,20 +349,21 @@ void Xicro::_SendBool(bool *data,uint8_t len,bool flagNext){ //flagnext=1=contin
             }
         }
         _crc=_getcrc(_crc,buff,3);
-        _serial->write(buff,3);
+        __SEND_UART(buff,3);
     }
 }
 void Xicro::_Sendcrc(){
-    _serial->write(_crc);
+    __SEND_UART(&_crc,1);
+!#@ gen_stop_pack_udp
 }
 void Xicro::_SendIdTopic(uint8_t IdTopic){
     _crc=_getcrc(_crc,&IdTopic,1);
-    _serial->write(IdTopic);
+    __SEND_UART(&IdTopic,1);
 }
 void Xicro::_SendEmpty(){
     uint8_t em=254;
     _crc=_getcrc(_crc,&em,1);
-    _serial->write(em);
+    __SEND_UART(&em,1);
 }
 void Xicro::Test(){
     
@@ -371,7 +377,7 @@ void Xicro::Test(){
 
 
 
-
+!#@ gen_void
 
 
 
@@ -393,9 +399,8 @@ void Xicro::Test(){
 
 //get
 void Xicro::Spin_node(){
-    if(_serial->available() > 0){
-        _serial->readBytes(_datain,1);
-        // _serial->write(_datain,1);
+
+!#@ gen_head_state
         
         switch (_state){
             case 0:
@@ -643,7 +648,7 @@ void Xicro::Spin_node(){
                             _Ontype=_datain[0];
                             _Ongrab=0;
                             _bufff="";
-                            _state=99; // get 1 string
+                            _state=99; // get 1 __STR_TYPE
                         }else if (_datain[0]==243){
                             _Indexdata=_Indexdata+1;
                             _OngrabTo=_Nofdata[_OnTopic][_Indexdata];
@@ -779,7 +784,7 @@ void Xicro::Spin_node(){
                             _Ontype=_datain[0];
                             _Ongrab=0;
                             _bufff="";
-                            _state=99; // get 1 string
+                            _state=99; // get 1 __STR_TYPE
                         }else if (_datain[0]==243){
                             _Indexdata=_Indexdata+1;
                             _OngrabTo=_Nofdata_srv_client_res[_OnTopic][_Indexdata];
@@ -933,7 +938,7 @@ void Xicro::Spin_node(){
                             _Ontype=_datain[0];
                             _Ongrab=0;
                             _bufff="";
-                            _state=99; // get 1 string
+                            _state=99; // get 1 __STR_TYPE
                         }else if (_datain[0]==243){
                             _Indexdata=_Indexdata+1;
                             _OngrabTo=_Nofdata_srv_server_req[_OnTopic][_Indexdata];
@@ -1081,7 +1086,7 @@ void Xicro::Spin_node(){
                             _Ontype=_datain[0];
                             _Ongrab=0;
                             _bufff="";
-                            _state=99; // get 1 string
+                            _state=99; // get 1 __STR_TYPE
                         }else if (_datain[0]==243){
                             _Indexdata=_Indexdata+1;
                             _OngrabTo=_Nofdata_action_client_feed[_OnTopic][_Indexdata];
@@ -1244,7 +1249,7 @@ void Xicro::Spin_node(){
                             _Ontype=_datain[0];
                             _Ongrab=0;
                             _bufff="";
-                            _state=99; // get 1 string
+                            _state=99; // get 1 __STR_TYPE
                         }else if (_datain[0]==243){
                             _Indexdata=_Indexdata+1;
                             _OngrabTo=_Nofdata_action_client_res[_OnTopic][_Indexdata];
@@ -1407,7 +1412,7 @@ void Xicro::Spin_node(){
                             _Ontype=_datain[0];
                             _Ongrab=0;
                             _bufff="";
-                            _state=99; // get 1 string
+                            _state=99; // get 1 __STR_TYPE
                         }else if (_datain[0]==243){
                             _Indexdata=_Indexdata+1;
                             _OngrabTo=_Nofdata_action_server_req[_OnTopic][_Indexdata];
@@ -1793,7 +1798,7 @@ void Xicro::Spin_node(){
             
                 break;
             case 111:
-                // _serial->write(_crcIn);
+                // __SEND_UART(_crcIn);
                 if(_crcIn==_datain[0]){
                     if(_OnMode==2){
                         for (int i=0;i<_Totalvar[_OnTopic];i++){
@@ -1819,7 +1824,7 @@ void Xicro::Spin_node(){
                                 }else if (_TopicType[_OnTopic][i]== 111 || _TopicType[_OnTopic][i]== 112){
                                     *(float*)_verify[_OnTopic][i][k]=*(float*)_nonverify[_OnTopic][i][k];
                                 }else if (_Srv_client_res_Type[_OnTopic][i]== 242 || _TopicType[_OnTopic][i]== 243){
-                                    *(String*)_verify[_OnTopic][i][k]=*(String*)_nonverify[_OnTopic][i][k];  
+                                    *(__STR_TYPE*)_verify[_OnTopic][i][k]=*(__STR_TYPE*)_nonverify[_OnTopic][i][k];  
                                 }
                             }
                         }
@@ -1847,7 +1852,7 @@ void Xicro::Spin_node(){
                                 }else if (_Srv_client_res_Type[_OnTopic][i]== 111 || _Srv_client_res_Type[_OnTopic][i]== 112){
                                     *(float*)_verify_srv_client_res[_OnTopic][i][k]=*(float*)_nonverify_srv_client_res[_OnTopic][i][k];               
                                 }else if (_Srv_client_res_Type[_OnTopic][i]== 242 || _Srv_client_res_Type[_OnTopic][i]== 243){
-                                    *(String*)_verify_srv_client_res[_OnTopic][i][k]=*(String*)_nonverify_srv_client_res[_OnTopic][i][k];
+                                    *(__STR_TYPE*)_verify_srv_client_res[_OnTopic][i][k]=*(__STR_TYPE*)_nonverify_srv_client_res[_OnTopic][i][k];
                                 }
                             }
 
@@ -1881,7 +1886,7 @@ void Xicro::Spin_node(){
                                 }else if (_Srv_server_req_Type[_OnTopic][i]== 111 || _Srv_server_req_Type[_OnTopic][i]== 112){
                                     *(float*)_verify_srv_server_req[_OnTopic][i][k]=*(float*)_nonverify_srv_server_req[_OnTopic][i][k];               
                                 }else if (_Srv_server_req_Type[_OnTopic][i]== 242 || _Srv_server_req_Type[_OnTopic][i]== 243){
-                                    *(String*)_verify_srv_server_req[_OnTopic][i][k]=*(String*)_nonverify_srv_server_req[_OnTopic][i][k];
+                                    *(__STR_TYPE*)_verify_srv_server_req[_OnTopic][i][k]=*(__STR_TYPE*)_nonverify_srv_server_req[_OnTopic][i][k];
                                 }
                             }
 
@@ -1916,7 +1921,7 @@ void Xicro::Spin_node(){
                                 }else if (_Action_client_feed_Type[_OnTopic][i]== 111 || _Action_client_feed_Type[_OnTopic][i]== 112){
                                     *(float*)_verify_action_client_feed[_OnTopic][i][k]=*(float*)_nonverify_action_client_feed[_OnTopic][i][k];               
                                 }else if (_Action_client_feed_Type[_OnTopic][i]== 242 || _Action_client_feed_Type[_OnTopic][i]== 243){
-                                    *(String*)_verify_action_client_feed[_OnTopic][i][k]=*(String*)_nonverify_action_client_feed[_OnTopic][i][k];
+                                    *(__STR_TYPE*)_verify_action_client_feed[_OnTopic][i][k]=*(__STR_TYPE*)_nonverify_action_client_feed[_OnTopic][i][k];
                                 }
                             }
 
@@ -1950,7 +1955,7 @@ void Xicro::Spin_node(){
                                 }else if (_Action_client_res_Type[_OnTopic][i]== 111 || _Action_client_res_Type[_OnTopic][i]== 112){
                                     *(float*)_verify_action_client_res[_OnTopic][i][k]=*(float*)_nonverify_action_client_res[_OnTopic][i][k];               
                                 }else if (_Action_client_res_Type[_OnTopic][i]== 242 || _Action_client_res_Type[_OnTopic][i]== 243){
-                                    *(String*)_verify_action_client_res[_OnTopic][i][k]=*(String*)_nonverify_action_client_res[_OnTopic][i][k];
+                                    *(__STR_TYPE*)_verify_action_client_res[_OnTopic][i][k]=*(__STR_TYPE*)_nonverify_action_client_res[_OnTopic][i][k];
                                 }
                             }
 
@@ -1984,7 +1989,7 @@ void Xicro::Spin_node(){
                                 }else if (_Action_server_req_Type[_OnTopic][i]== 111 || _Action_server_req_Type[_OnTopic][i]== 112){
                                     *(float*)_verify_action_server_req[_OnTopic][i][k]=*(float*)_nonverify_action_server_req[_OnTopic][i][k];               
                                 }else if (_Action_server_req_Type[_OnTopic][i]== 242 || _Action_server_req_Type[_OnTopic][i]== 243){
-                                    *(String*)_verify_action_server_req[_OnTopic][i][k]=*(String*)_nonverify_action_server_req[_OnTopic][i][k];
+                                    *(__STR_TYPE*)_verify_action_server_req[_OnTopic][i][k]=*(__STR_TYPE*)_nonverify_action_server_req[_OnTopic][i][k];
                                 }
                             }
 
@@ -2002,7 +2007,7 @@ void Xicro::Spin_node(){
                 }
                 _state=0;
                 break;
-            case 99: //string
+            case 99: //__STR_TYPE
 
                 if(_datain[0]==42){
                     _state=100;
@@ -2015,24 +2020,24 @@ void Xicro::Spin_node(){
                 if(_datain[0]==126){
 
                     if(_OnMode == 2){
-                        *(String*)_nonverify[_OnTopic][_Indexdata][_Ongrab] =   (String)_bufff;
+                        *(__STR_TYPE*)_nonverify[_OnTopic][_Indexdata][_Ongrab] =   (__STR_TYPE)_bufff;
                     }else if(_OnMode == 12){
-                        *(String*)_nonverify_srv_client_res[_OnTopic][_Indexdata][_Ongrab] =   (String)_bufff;                        
+                        *(__STR_TYPE*)_nonverify_srv_client_res[_OnTopic][_Indexdata][_Ongrab] =   (__STR_TYPE)_bufff;                        
                     }else if(_OnMode == 13){
-                        *(String*)_nonverify_srv_server_req[_OnTopic][_Indexdata][_Ongrab] =   (String)_bufff;                        
+                        *(__STR_TYPE*)_nonverify_srv_server_req[_OnTopic][_Indexdata][_Ongrab] =   (__STR_TYPE)_bufff;                        
                     }else if(_OnMode == 6){
-                        *(String*)_nonverify_action_client_feed[_OnTopic][_Indexdata][_Ongrab] =   (String)_bufff;                        
+                        *(__STR_TYPE*)_nonverify_action_client_feed[_OnTopic][_Indexdata][_Ongrab] =   (__STR_TYPE)_bufff;                        
                     }else if(_OnMode == 7){
-                        *(String*)_nonverify_action_client_res[_OnTopic][_Indexdata][_Ongrab] =   (String)_bufff;                        
+                        *(__STR_TYPE*)_nonverify_action_client_res[_OnTopic][_Indexdata][_Ongrab] =   (__STR_TYPE)_bufff;                        
                     }else if(_OnMode == 8){
-                        *(String*)_nonverify_action_server_req[_OnTopic][_Indexdata][_Ongrab] =   (String)_bufff;                        
+                        *(__STR_TYPE*)_nonverify_action_server_req[_OnTopic][_Indexdata][_Ongrab] =   (__STR_TYPE)_bufff;                        
                     }
                     
                     _Ongrab=_Ongrab+1;
                     if(_Ongrab==_OngrabTo){
                         _state=222; // check main continue or stop
                     }else{
-                        _state=99;  // get more string
+                        _state=99;  // get more __STR_TYPE
                     }
                 }else{
                     _state=0;
@@ -2067,10 +2072,8 @@ void Xicro::Spin_node(){
                 break;
         }
         _crcIn=_getcrc(_crcIn,&_datain[0],1); 
-        // uint8_t tyu[3]={199,199,202};
-        // tyu[1]=_state;
-        // _serial->write(_crcIn);
-        // _serial->write(_state);
+!#@ gen_count_buffer
+
 
     }
 }
