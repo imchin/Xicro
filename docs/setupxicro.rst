@@ -12,11 +12,11 @@ Configured yaml
 setup_xicro.yaml is contain 
 
 microcontroller
-    1. Idmcu : It sets the ID of the MCU for the system Xicro.
+    1. idmcu : It sets the ID of the MCU for the system Xicro.
 
         The mcu Id may range from 0 to 15. 
     
-    2. Namespace : This is the name of the file that will be created.
+    2. namespace : This is the name of the file that will be created.
 
     3. generate_library_Path : Is the path for creating .h and .cpp files. Xicro will create a folder with files at the path.
 
@@ -28,7 +28,7 @@ microcontroller
         
         2. serial_port : Name open port of MCU
      
-        3. Baudrate : Can config baudrate
+        3. baudrate : Can config baudrate
             Baudrate affects the data transmission rate. Can use <=2000000
     
                 \**Recommended at 115200.
