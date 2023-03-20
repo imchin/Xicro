@@ -140,8 +140,12 @@ The node will be generated based on setup_xicro.yaml
 
     cd ~/xxx_ws          # cd to your workspace
     colcon build
-    ros2 run xicro_pkg generate_xicro_node.py -mcu_type  // Xicro node will be created at path ~xxx_ws/scr/Xicro/xicro_pkg/scripts
-   
+    ros2 run xicro_pkg generate_xicro_node.py -mcu_type // Xicro node will be created at path ~xxx_ws/scr/Xicro/xicro_pkg/scripts
+    ros2 run xicro_pkg generate_xicro_node.py -mcu_type arduino  // Exmaple generate for arduino family.
+    ros2 run xicro_pkg generate_xicro_node.py -mcu_type stm32  // Exmaple generate for stm32 family.
+    ros2 run xicro_pkg generate_xicro_node.py -mcu_type esp  // Exmaple generate for esp family.
+
+    
   
 -mcu_type (require) : This is the mcu family that you want to use, Can be [arduino , esp , stm32]
 
@@ -179,7 +183,7 @@ The library will be generated based on setup_xicro.yaml
 
     .. code-block:: sh
 
-        ros2 run xicro_pkg generate_library.py -mcu_type stm32 -module_nam stm32l0xx_hal.h  // Exmaple generate for stm32L0xx
+        ros2 run xicro_pkg generate_library.py -mcu_type stm32 -module_name stm32l0xx_hal.h  // Exmaple generate for stm32L0xx
         ros2 run xicro_pkg generate_library.py -mcu_type arduino  // Exmaple generate for arduino family.
         ros2 run xicro_pkg generate_library.py -mcu_type esp  // Exmaple generate for esp family.
 
