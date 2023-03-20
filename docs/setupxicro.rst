@@ -38,6 +38,10 @@ microcontroller
         5. udp_port_mcu : port of connection UDP mode
         
 ros
+    setup ros is reference from microcontroller 
+    
+        example publisher is mean microcontroller publish to ros network
+        
     1. publisher : Configuration for publishing topic from MCU to ROS2.
         In format : [ [ID_topic,Name_topic,Interface],[ID_topic_2,Name_topic_2,Interface_2],.......]
             1. ID_topic : It sets the ID of the topic_publish for the system Xicro.
@@ -50,7 +54,7 @@ ros
             
              "(The name of the package that contains the interface file)/(Name_of_fileinterface).msg" 
 
-    2. subscrsubscriberiber : Configuration for subscribe topic from  ROS2 to MCU.
+    2. subscriber : Configuration for subscribe topic from  ROS2 to MCU.
         In format : [ [ID_topic,Name_topic,Interface],[ID_topic_2,Name_topic_2,Interface_2],.......]
   
             1. ID_topic : It sets the ID of the topic_subscribe for the system Xicro.
@@ -63,7 +67,7 @@ ros
         
                "(The name of the package that contains the interface file)/(Name_of_fileinterface).msg" 
 
-    3. Setup_Srv_client : Configuration for service client. 
+    3. srv_client : Configuration for service client. 
         In format : [ [ID_service,Name_service,Interface,time_out],[ID_service_2,Name_service_2,Interface_2,time_out_2],.......]
 
         1. ID_service : It sets the ID of the service_client for the system Xicro.
@@ -77,7 +81,7 @@ ros
                 "(The name of the package that contains the interface file)/(Name_of_fileinterface).srv" 
         4. time_out : Limit the maximum service usage time. (In type float)
 
-    4. Setup_Srv_server : Configuration for service server. 
+    4. srv_server : Configuration for service server. 
         In format : [ [ID_service,Name_service,Interface,time_out],[ID_service_2,Name_service_2,Interface_2,time_out_2],.......]
 
         1. ID_service : It sets the ID of the service_server for the system Xicro.
@@ -91,7 +95,7 @@ ros
                 "(The name of the package that contains the interface file)/(Name_of_fileinterface).srv" 
         4. time_out : Limit the maximum service usage time. (In type float)
 
-    5. Setup_Action_client : Configuration for action client. 
+    5. action_client : Configuration for action client. 
         In format : [ [ID_action,Name_action,Interface,time_out],[ID_action_2,Name_action_2,Interface_2,time_out_2],.......]
 
         1. ID_action : It sets the ID of the action_client for the system Xicro
@@ -105,7 +109,7 @@ ros
                 "(The name of the package that contains the interface file)/(Name_of_fileinterface).action" 
         4. time_out : Limit the maximum action usage time. (In type float)        
       
-    6. Setup_Action_server : Configuration for action server. 
+    6. action_server : Configuration for action server. 
         In format : [ [ID_action,Name_action,Interface,time_out],[ID_action_2,Name_action_2,Interface_2,time_out_2],.......]
 
         1. ID_action : It sets the ID of the action_server for the system Xicro
