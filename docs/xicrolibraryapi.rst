@@ -33,7 +33,7 @@ The xicro library has to be set up.
         1\. Set the communication baudrate to match the setting in the file. setup_xicro.yaml.
 
         2\. Enter the address of the UART to register the xicro library. (function begin())
-    2. Setup Xicro with udp
+    2. Setup Xicro begin with udp
 
         .. image:: pic/setudp.png
             :width: 320
