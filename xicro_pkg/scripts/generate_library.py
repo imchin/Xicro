@@ -2564,6 +2564,8 @@ def create_cppFile(listVoid,id_mcu,id_topic,dataType,dataName,Nofdata,listVoid_c
                 gen_head_state_udp(fw)
             elif(line=="!#@ gen_count_buffer\n" and get_params("microcontroller.connection.type") == "UDP"):
                 fw.write("        _Posdatapre=(_Posdatapre+1) %1000;\n")
+            elif(line=="!#@ gen_count_buffer\n" and get_params("microcontroller.connection.type") == "UART" and ((input.mcu_type== "arduino" )or (input.mcu_type== "esp"))):
+                pass
             elif(line=="!#@ gen_count_buffer\n" and input.mcu_type== "stm32" ):
                 fw.write("        _Posdatapre=(_Posdatapre+1) %64;\n")
             elif(line=="!#@ gen_head_state\n"and input.mcu_type== "stm32"):
@@ -2667,7 +2669,7 @@ def typetoVoid(typee,namee,Nofdata,cond,nameString):
     elif(typee=="string" and Nofdata!=1):
         return  "    _SendString("+namee+","+ str(Nofdata)+");\n" 
     elif(typee=="bool" and Nofdata==1):
-        return  "    _SendBool((bool*)&"+namee+","+ str(Nofdata)+","+str(int(cond))+");\n"
+        return  "    _SendBool((bool*)"+namee+","+ str(Nofdata)+","+str(int(cond))+");\n"
     elif(typee=="bool" and Nofdata!=1):
         return  "    _SendBool("+namee+","+ str(Nofdata)+","+str(int(cond))+");\n"
     elif(typee=="xxicro_Empty" and Nofdata==1):
