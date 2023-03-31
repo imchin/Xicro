@@ -1,0 +1,1503 @@
+
+
+# Generate xicro_node
+
+from rclpy.action import ActionClient,ActionServer
+import math
+import rclpy
+from rclpy.node import Node
+from rclpy.executors import MultiThreadedExecutor
+import numpy as np
+!#@ gen_import_module_connection
+!#@ gen_import_interface
+import struct
+import time
+import multiprocessing as mp
+import argparse
+import sys
+
+
+
+
+
+
+def checkNofdata(dataType):
+    S=dataType.find("[")
+    F= dataType.find("]")
+    if(S!=-1 and F!=-1):
+        return int(dataType[S+1:F])
+    else:
+        return 1
+def typetoProtocol(typee,Nofdata):
+    ans=0
+    Nofbyte=0
+    if(typee=="uint8"):
+        ans=  8
+        Nofbyte=1
+    elif(typee=="uint16"):
+        ans=  16
+        Nofbyte=2
+    elif(typee=="uint32"):
+        ans=  32
+        Nofbyte=4
+    elif(typee=="uint64"):
+        ans=  64
+        Nofbyte=8
+    elif(typee=="int8"):
+        ans=  18
+        Nofbyte=1
+    elif(typee=="int16"):
+        ans=  116
+        Nofbyte=2
+    elif(typee=="int32"):
+        ans=  132
+        Nofbyte=4
+    elif(typee=="int64"):
+        ans=  164
+        Nofbyte=8
+    elif(typee=="float32"):
+        ans=  111
+        Nofbyte=4
+    elif(typee=="float64" ):
+        ans= 222
+        Nofbyte=8
+    elif(typee=="string" ):
+        ans= 242
+        Nofbyte=888
+    elif(typee=="bool" ):
+        ans= 88
+        Nofbyte=1
+    elif(typee=="xxicro_Empty" ):
+        ans= 254
+        Nofbyte=1
+    if(Nofdata==1):
+        return ans,Nofbyte
+    elif(typee=="bool" ):
+        return ans+1,999
+    else:
+        return ans+1,Nofbyte
+
+# gen setup
+!#@ gen_setup_function
+def create_N_topic(self,name,interfaces):
+    try:
+        for i in range (0,len(interfaces)):
+            interfaces[i]=interfaces[i].split("/")[1]
+            msg= interfaces[i][0:len(interfaces[i])-4]
+            interfaces[i] = self.create_publisher(globals()[msg] , name[i], 10)
+            print('Open Topic Name : '+name[i] +"  >>>>  Use msg name : "+ msg)
+        print("Open Topic All Done.")
+        return  interfaces
+    except:
+        print("Open Topic Fail.")
+        return 0
+
+def bufferToType(BUFFER,Typee):
+    if(Typee== "uint8" or Typee== "uint16" or Typee== "uint32" or Typee== "uint64"):
+        bytes_val = bytearray(BUFFER)
+        return int.from_bytes(bytes_val, byteorder="big",signed=0)
+    elif(Typee=="int8" or Typee =="int16" or Typee== "int32" or Typee== "int64"):
+        bytes_val = bytearray(BUFFER)
+        return int.from_bytes(bytes_val, byteorder="big",signed=1)
+    elif(Typee=="float32" ):
+        bytes_val = bytearray(BUFFER)
+        return struct.unpack('<f', bytes_val)[0]
+
+    elif(Typee=="float64"):
+        bytes_val = bytearray(BUFFER)
+        return struct.unpack('<d', bytes_val)[0]
+
+
+
+
+
+
+class Publisher_node(Node):
+
+    def __init__(self):
+!#@ gen_name_of_publisher_node
+        self.Idmsg , self.nametopic ,  self.interfaceTopic ,self.dataType , self.dataName ,self.datagrab ,self.Nofdata,self.Protocoltype,self.byteTograb= setup_var_protocol()
+        # print(self.Idmsg , self.nametopic ,  self.interfaceTopic ,self.dataType , self.dataName ,self.datagrab ,self.Nofdata)
+        self.emptydatagrab=self.datagrab.copy()
+        self.obj= create_N_topic(self,self.nametopic,self.interfaceTopic.copy())
+
+
+
+    def pubbb(self,Ongrab,OnIdmsg):
+        for i in range(0,len(self.Idmsg)):
+            if(self.Idmsg[i]==OnIdmsg):
+                index=i
+
+        msg= self.interfaceTopic[index].split("/")[1][0:len(self.interfaceTopic[index])-4]
+        msg=globals()[msg.split(".")[0]]()
+        # print(msg)
+        # print(self.dataName[index])
+        # print(self.Nofdata[index])
+        # print(Ongrab)
+        for i in range(0,len(self.Nofdata[index])):
+            for j in range(0,self.Nofdata[index][i]):
+                if(self.Nofdata[index][i]==1):
+                    exec("%s = %s" % (("msg."+self.dataName[index][i]) ,"Ongrab[i]") )
+                else:
+                    exec("%s = %s" % (("msg."+self.dataName[index][i]+"["+str(j)+"]") ,"Ongrab[i][j]") )
+        # print(msg)
+        self.obj[index].publish(msg)
+
+class Xicro_instruction():
+    def __init__(self,Obj_uart):
+        self.Obj_uart = Obj_uart
+        self.CRC=0
+        self.crcc=CRC8_Xicro()
+        self.Buff_send = []
+    def _SendStart(self):
+        start=[73,109,64,99]
+        self.CRC=self.crcc.CheckList(self.CRC,start)
+        self.Buff_send.extend(start)
+        return 1
+    def _SendStop(self):
+        stop=[126,126]
+        self.CRC=self.crcc.CheckList(self.CRC,stop)
+        self.Buff_send.extend(stop)
+        return 1
+    def _SendContinue(self):
+        con=[42,42]
+        self.CRC=self.crcc.CheckList(self.CRC,con)
+        self.Buff_send.extend(con)
+        return 1
+    def _SendNotresponse(self):
+        erorr=[252]
+        self.CRC=self.crcc.CheckList(self.CRC,erorr)
+        self.Buff_send.extend(bytearray(erorr))
+        return 1
+    def _SendGoalaccept(self):
+        acc=[95]
+        self.CRC=self.crcc.CheckList(self.CRC,acc)
+        self.Buff_send.extend(bytearray(acc))
+        return 1
+    def _SendGoalreject(self):
+        re=[96]
+        self.CRC=self.crcc.CheckList(self.CRC,re)
+        self.Buff_send.extend(bytearray(re))
+        return 1
+    def _SendTimeOut(self):
+        t=[97]
+        self.CRC=self.crcc.CheckList(self.CRC,t)
+        self.Buff_send.extend(bytearray(t))
+        return 1
+    def _SendNone(self):
+        nn=[253]
+        self.CRC=self.crcc.CheckList(self.CRC,nn)
+        self.Buff_send.extend(bytearray(nn))
+        return 1
+    def _SendCRC(self):
+        self.Buff_send.append(self.CRC)
+        return 1
+    def _SendSignature(self,Idmcu,Mode):
+        buff=[0]
+        buff[0]=Idmcu<<4
+        buff[0]=buff[0]|Mode
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+        return 1
+    def _SendIdtopic(self,Idtopic):
+        buff=[Idtopic&0xFF]
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+        return 1
+    def _SendNotresponse(self):
+        erorr=[252]
+        self.CRC=self.crcc.CheckList(self.CRC,erorr)
+        self.Buff_send.extend(bytearray(erorr))
+        return 1
+    def _SendIdsrv(self,Idsrv):
+        buff=[Idsrv&0xFF]
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(bytearray(buff))
+        return 1
+    def _SendIdaction(self,Idaction):
+        buff=[Idaction&0xFF]
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(bytearray(buff))
+        return 1
+    def _SendUint8(self,data,len):
+        if(len>1):
+            buff=[9]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i]&0xff)
+        else:
+            buff=[8,0]
+            buff[1]=data&0xff
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendUint16(self,data,len):
+        if(len>1):
+            buff=[17]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 8 & 0xFF)
+                buff.append(data[i] >> 0 & 0xFF)
+        else:
+            buff=[16]
+            buff.append(data >> 8 & 0xFF)
+            buff.append(data >> 0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendUint32(self,data,len):
+        if(len>1):
+            buff=[33]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+        else:
+            buff=[32]
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendUint64(self,data,len):
+        if(len>1):
+            buff=[65]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 56 & 0xFF)
+                buff.append(data[i] >> 48 & 0xFF)
+                buff.append(data[i] >> 40 & 0xFF)
+                buff.append(data[i] >> 32 & 0xFF)
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+        else:
+            buff=[64]
+            buff.append(data >> 56 & 0xFF)
+            buff.append(data >> 48 & 0xFF)
+            buff.append(data >> 40 & 0xFF)
+            buff.append(data >> 32 & 0xFF)
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+
+    def _SendInt8(self,data,len):
+        if(len>1):
+            buff=[19]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i]&0xff)
+        else:
+            buff=[18,0]
+            buff[1]=data&0xff
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendInt16(self,data,len):
+        if(len>1):
+            buff=[117]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 8 & 0xFF)
+                buff.append(data[i] >> 0 & 0xFF)
+        else:
+            buff=[116]
+            buff.append(data >> 8 & 0xFF)
+            buff.append(data >> 0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendInt32(self,data,len):
+        if(len>1):
+            buff=[133]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+        else:
+            buff=[132]
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendInt64(self,data,len):
+        if(len>1):
+            buff=[165]
+            buff.append(len)
+            for i in range(0,len):
+                buff.append(data[i] >> 56 & 0xFF)
+                buff.append(data[i] >> 48 & 0xFF)
+                buff.append(data[i] >> 40 & 0xFF)
+                buff.append(data[i] >> 32 & 0xFF)
+                buff.append(data[i] >> 24 & 0xFF)
+                buff.append(data[i] >> 16 & 0xFF)
+                buff.append(data[i] >>  8 & 0xFF)
+                buff.append(data[i] >>  0 & 0xFF)
+
+        else:
+            buff=[164]
+            buff.append(data >> 56 & 0xFF)
+            buff.append(data >> 48 & 0xFF)
+            buff.append(data >> 40 & 0xFF)
+            buff.append(data >> 32 & 0xFF)
+            buff.append(data >> 24 & 0xFF)
+            buff.append(data >> 16 & 0xFF)
+            buff.append(data >>  8 & 0xFF)
+            buff.append(data >>  0 & 0xFF)
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+
+    def _SendString(self,data,lenn):
+        if(lenn>1):
+            buff=[243]
+            buff.append(lenn&0xFF)
+            for i in range (0,lenn):
+                data[i]=data[i].encode()
+                txt=bytearray(data[i])
+                buff.extend(list(txt))
+                buff.extend([42,126])
+        else:
+            buff=[242]
+            data=data.encode()
+            txt=bytearray(data)
+            buff.extend(list(txt))
+            buff.extend([42,126])
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendFloat32(self,data,lenn):
+        if(lenn>1):
+            buff=[112]
+            buff.append(lenn&0xFF)
+            for i in range (0,lenn):
+                ff=bytearray(struct.pack(">f", data[i]))
+                buff.extend(list(ff))
+        else:
+            buff=[111]
+            ff=bytearray(struct.pack(">f", data))
+            buff.extend(list(ff))
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendFloat64(self,data,lenn):
+        if(lenn>1):
+            buff=[223]
+            buff.append(lenn&0xFF)
+            for i in range (0,lenn):
+                ff=bytearray(struct.pack(">d", data[i]))
+                buff.extend(list(ff))
+        else:
+            buff=[222]
+            ff=bytearray(struct.pack(">d", data))
+            buff.extend(list(ff))
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _SendBool(self,data,lenn,flagCon):
+        if(lenn>1):
+            sizee=2
+            sizee=sizee+ math.ceil(lenn/8.0)
+            buff=[]
+            for i in range(0,sizee):
+                buff.append(0)
+            # print(buff)
+            buff[0]=89
+            buff[1]=lenn & 0xFF
+            onbyte=2
+            j=0
+            for i in range(0,lenn):
+                data[i]=data[i] & 0x01
+                buff[onbyte]= buff[onbyte] | (data[i] << j)
+                if(j == 7):
+                    onbyte=onbyte+1
+                    j=0
+                else:
+                    j=j+1
+        else:
+            buff=[88]
+            if(data==True):
+                if(flagCon):
+                    buff.extend([250,250])
+                else:
+                    buff.extend([254,254])
+            else:
+                if(flagCon):
+                    buff.extend([47,47])
+                else:
+                    buff.extend([127,127])
+        self.CRC=self.crcc.CheckList(self.CRC,buff)
+        self.Buff_send.extend(buff)
+    def _To_Send(self):
+        self.Obj_uart.queue_Send(self.Buff_send)
+        return 1
+    def _Reset_Buff(self):
+        self.Buff_send = []
+        return 1
+    def _Reset_CRC(self):
+        self.CRC = 0
+        return 1
+
+
+class Subscriber_node(Node):
+    def __init__(self,Obj_uart):
+!#@ gen_name_of_subscriber_node
+        self.Obj_uart = Obj_uart
+        self.xicro_instruction = Xicro_instruction(self.Obj_uart)
+        time.sleep(1)
+
+        # gen sub
+!#@ gen_sub
+
+    # gen callback sub
+!#@ gen_callback_sub
+
+
+
+class ThreadThree(Node):
+    def __init__(self,dma):
+        super().__init__('ThreadThree')
+
+
+
+def select_pipe(obj_pipe):
+    for i in range(0,16):
+        if(obj_pipe[i]== 888):
+            return i
+    return None
+
+!#@ gen_def_receive_uart
+
+
+
+def Protocol_XicroToRos_spin(Obj_uart,ModeEx,checkIdOn,sh_res,st_index,sh_res_2): #processer 3,5,srv_server_res
+
+
+    if(ModeEx==0):
+        Indexpre_value=Obj_uart.index.value
+        rclpy.init()
+        Pn= Publisher_node()    # create publisher object
+        print("XicroToRos_spin pub")
+    elif(ModeEx==1):
+        Indexpre_value=Obj_uart.index.value
+        Pn=888
+        print("XicroToRos_spin Srv client")
+    elif(ModeEx==2):
+        Indexpre_value=st_index
+        Pn=888
+        print("XicroToROs_spin Srv server wait response IdOn : "+str(checkIdOn))
+    elif(ModeEx==3):
+        Indexpre_value=Obj_uart.index.value
+        Pn=888
+        print("XicroToRos_spin Action client")
+    elif(ModeEx==4):
+        Indexpre_value=st_index
+        Pn=888
+        print("XicroToROs_spin Action server wait feedback and result IdOn : "+str(checkIdOn))
+    crcc=CRC8_Xicro() # create crc object
+    crcc.begin(Obj_uart.Buff)  # crc begin
+    state=0
+    Idmsg,nametopic,interfacetopic,dataType,dataName,datagrab,NofData,datatypeProtocol,byteTograb=setup_var_protocol() # get variable from yaml
+    pipe=[888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888, 888]
+    Idsrv_client,namesrv_client,interfacesrv_client,dataType_srv_client_req,dataName_srv_client_req,datagrab_srv_client_req,NofData_srv_client_req,datatypeProtocol_srv_client_req,bytetograb_srv_client_req,dataType_srv_client_res,dataName_srv_client_res,datagrab_srv_client_res,NofData_srv_client_res,datatypeProtocol_srv_client_res,bytetograb_srv_client_res,timeOut_srv_client = setup_srv_protocol()
+    Idsrv_server,namesrv_server,interfacesrv_server,dataType_srv_server_req,dataName_srv_server_req,datagrab_srv_server_req,NofData_srv_server_req,datatypeProtocol_srv_server_req,bytetograb_srv_server_req,dataType_srv_server_res,dataName_srv_server_res,datagrab_srv_server_res,NofData_srv_server_res,datatypeProtocol_srv_server_res,bytetograb_srv_server_res,timeOut_srv_server = setup_srv_server_protocol()
+    Idaction_client,nameaction_client,interfaceaction_client,dataType_action_client_req,dataName_action_client_req,datagrab_action_client_req,NofData_action_client_req,datatypeProtocol_action_client_req,bytetograb_action_client_req,dataType_action_client_res,dataName_action_client_res,datagrab_action_client_res,NofData_action_client_res,datatypeProtocol_action_client_res,bytetograb_action_client_res,dataType_action_client_feed,dataName_action_client_feed,datagrab_action_client_feed,NofData_action_client_feed,datatypeProtocol_action_client_feed,bytetograb_action_client_feed,timeOut_action_client = setup_action_client_protocol()
+    Idaction_server,nameaction_server,interfaceaction_server,dataType_action_server_req,dataName_action_server_req,datagrab_action_server_req,NofData_action_server_req,datatypeProtocol_action_server_req,bytetograb_action_server_req,dataType_action_server_res,dataName_action_server_res,datagrab_action_server_res,NofData_action_server_res,datatypeProtocol_action_server_res,bytetograb_action_server_res,dataType_action_server_feed,dataName_action_server_feed,datagrab_action_server_feed,NofData_action_server_feed,datatypeProtocol_action_server_feed,bytetograb_action_server_feed,timeOut_action_server = setup_action_server_protocol()
+    r_pipe=0
+    # gen Id
+!#@ gen_id_mcu
+    OnIdsrv=0
+    OnMode=0
+    OnIdmsg=0
+    OnIdaction=0
+    Ongrab=[]
+    Ontype=[]
+    OnNofdata=[]
+    OntypeIndex=0
+    OntypeProtocol=[]
+    OnbyteTograb=[]
+    while(1):
+        try:
+            if(Indexpre_value != Obj_uart.index.value):  # state machine
+                # print(Obj_uart.Buff[Indexpre_value])
+
+
+                if(state==0 and Obj_uart.Buff[Indexpre_value] == 73 ):
+                    state=1
+                elif(state==1 and Obj_uart.Buff[Indexpre_value]  == 109 ):
+                    state=2
+                elif(state==2 and Obj_uart.Buff[Indexpre_value] == 64 ):
+                    state=3
+                elif(state==3 and Obj_uart.Buff[Indexpre_value] == 99 ):
+                    # print("Done check Start")
+                    state=4
+                elif(state==4):  # signature
+                    # print("Idmcu=",Idmcu)
+                    if((ModeEx ==0 )and (int( (Obj_uart.Buff[Indexpre_value] ))&0b11110000 )>>4 == Idmcu  and int(Obj_uart.Buff[Indexpre_value])&0b1111 == 4  ):
+                        OnMode=4
+                        crcc.resetCRC()
+                        # print("Handshaking Complete Pub.")
+                        state=5
+                    elif((ModeEx==1 )and (int( (Obj_uart.Buff[Indexpre_value] ))&0b11110000 )>>4 == Idmcu  and int(Obj_uart.Buff[Indexpre_value])&0b1111 == 11 ):
+                        OnMode=11
+                        crcc.resetCRC()
+                        # print("Handshaking Complete Srv client req.")
+                        state=5
+                    elif((ModeEx==2 )and (int( (Obj_uart.Buff[Indexpre_value] ))&0b11110000 )>>4 == Idmcu  and int(Obj_uart.Buff[Indexpre_value])&0b1111 == 14 ):
+                        OnMode=14
+                        crcc.resetCRC()
+                        # print("Handshaking Complete Srv server res.")
+                        state=5  
+                    elif((ModeEx==3 )and (int( (Obj_uart.Buff[Indexpre_value] ))&0b11110000 )>>4 == Idmcu  and int(Obj_uart.Buff[Indexpre_value])&0b1111 == 5 ):
+                        OnMode=5
+                        crcc.resetCRC()
+                        # print("Handshaking Complete Action client req.")
+                        state=5
+                    elif((ModeEx==4 )and (int( (Obj_uart.Buff[Indexpre_value] ))&0b11110000 )>>4 == Idmcu  and int(Obj_uart.Buff[Indexpre_value])&0b1111 == 9 ):
+                        OnMode=9
+                        crcc.resetCRC()
+                        # print("Handshaking Complete Action server feed.")
+                        state=5
+                    elif((ModeEx==4 )and (int( (Obj_uart.Buff[Indexpre_value] ))&0b11110000 )>>4 == Idmcu  and int(Obj_uart.Buff[Indexpre_value])&0b1111 == 10 ):
+                        OnMode=10
+                        crcc.resetCRC()
+                        # print("Handshaking Complete Action server res.")
+                        state=5
+                    else:
+                        # print("Fail handshake")
+                        state=0
+                elif(state==5):   # On id msg xxx
+                    if(OnMode==4): # mode pub
+                        for i in range (0,len(Idmsg)):
+                            if(Obj_uart.Buff[Indexpre_value] == Idmsg[i]):
+                                # print(Idmsg)F
+                                # print(dataType)
+                                # print(datagrab)
+                                OnIdmsg=Idmsg[i]
+                                Ongrab=datagrab[i].copy()
+                                Ontype=dataType[i].copy()
+                                OnNofdata=NofData[i].copy()
+                                OntypeProtocol=datatypeProtocol[i].copy()
+                                OntypeIndex=-1
+                                OnbyteTograb=byteTograb[i].copy()
+                                # print("Ongrab",Ongrab)
+                                # print("Ontype",Ontype)
+                                # print("OnNof data",OnNofdata)
+                                # print("OnProtocol",OntypeProtocol)
+                                # print("OnbyteTograb",OnbyteTograb)
+                                state=6
+                                break
+                            else:
+                                state=0
+                    elif(OnMode==11): # mode service client req
+                        for i in range (0,len(Idsrv_client)):
+                            # print(Obj_uart.Buff[Indexpre_value] , Idsrv[i])
+                            if(Obj_uart.Buff[Indexpre_value] == Idsrv_client[i]):
+                                OnIdsrv=Idsrv_client[i]
+                                Ongrab=datagrab_srv_client_req[i].copy()
+                                Ontype=dataType_srv_client_req[i].copy()
+                                OnNofdata=NofData_srv_client_req[i].copy()
+                                OntypeProtocol=datatypeProtocol_srv_client_req[i].copy()
+                                # print(OntypeProtocol)
+                                OntypeIndex=-1
+                                OnbyteTograb=bytetograb_srv_client_req[i].copy()
+                                state=6
+                                break
+                            else:
+                                state=0
+                    elif(OnMode==14): # mode service server wait response
+                        for i in range (0,len(Idsrv_server)):
+                            # print(Obj_uart.Buff[Indexpre_value] , Idsrv[i])
+                            if(Obj_uart.Buff[Indexpre_value] == Idsrv_server[i] == checkIdOn):
+                                OnIdsrv=Idsrv_server[i]
+                                Ongrab=datagrab_srv_server_res[i].copy()
+                                Ontype=dataType_srv_server_res[i].copy()
+                                OnNofdata=NofData_srv_server_res[i].copy()
+                                OntypeProtocol=datatypeProtocol_srv_server_res[i].copy()
+                                # print(OntypeProtocol)
+                                OntypeIndex=-1
+                                OnbyteTograb=bytetograb_srv_server_res[i].copy()
+                                state=6
+                                break
+                            else:
+                                state=0
+                    elif(OnMode==5): # mode action client req
+                        for i in range (0,len(Idaction_client)):
+                            # print(Obj_uart.Buff[Indexpre_value] , Idsrv[i])
+                            if(Obj_uart.Buff[Indexpre_value] == Idaction_client[i]):
+                                OnIdaction=Idaction_client[i]
+                                Ongrab=datagrab_action_client_req[i].copy()
+                                Ontype=dataType_action_client_req[i].copy()
+                                OnNofdata=NofData_action_client_req[i].copy()
+                                OntypeProtocol=datatypeProtocol_action_client_req[i].copy()
+                                # print(OntypeProtocol)
+                                OntypeIndex=-1
+                                OnbyteTograb=bytetograb_action_client_req[i].copy()
+                                state=6
+                                break
+                            else:
+                                state=0
+                    elif(OnMode==9): # mode action server feed
+                        for i in range (0,len(Idaction_server)):
+                            if(Obj_uart.Buff[Indexpre_value] == Idaction_server[i] == checkIdOn):
+                                OnIdaction=Idaction_server[i]
+                                Ongrab=datagrab_action_server_feed[i].copy()
+                                Ontype=dataType_action_server_feed[i].copy()
+                                OnNofdata=NofData_action_server_feed[i].copy()
+                                OntypeProtocol=datatypeProtocol_action_server_feed[i].copy()
+                                # print(OntypeProtocol)
+                                OntypeIndex=-1
+                                OnbyteTograb=bytetograb_action_server_feed[i].copy()
+                                state=6
+                                break
+                            else:
+                                state=0
+                    elif(OnMode==10): # mode action server res
+                        for i in range (0,len(Idaction_server)):
+                            if(Obj_uart.Buff[Indexpre_value] == Idaction_server[i] == checkIdOn):
+                                OnIdaction=Idaction_server[i]
+                                Ongrab=datagrab_action_server_res[i].copy()
+                                Ontype=dataType_action_server_res[i].copy()
+                                OnNofdata=NofData_action_server_res[i].copy()
+                                OntypeProtocol=datatypeProtocol_action_server_res[i].copy()
+                                # print(OntypeProtocol)
+                                OntypeIndex=-1
+                                OnbyteTograb=bytetograb_action_server_res[i].copy()
+                                state=6
+                                break
+                            else:
+                                state=0
+                    else:
+                        state=0
+                elif(state==6):
+
+                    OntypeIndex=OntypeIndex+1
+                    # print("ONTYPEEEINDEX",OntypeIndex)
+                    # print("dddd",Obj_uart.Buff[Indexpre_value] ,OntypeProtocol[OntypeIndex])
+
+                    if( Obj_uart.Buff[Indexpre_value] == OntypeProtocol[OntypeIndex]):
+                        if(OntypeProtocol[OntypeIndex]==242 ):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]
+                            PASSNround=0
+                            TEMPstring=""
+                            state=111  # getString
+                        elif(OntypeProtocol[OntypeIndex]==243):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]
+                            PASSNround=0
+                            TEMPstring=""
+                            state=110  # check N of data is correct
+                        elif(OntypeProtocol[OntypeIndex]==88):
+                            state=120  # get 1 Bool
+                        elif(OntypeProtocol[OntypeIndex]==89):
+                            GETNbool=OnNofdata[OntypeIndex]
+                            GETNround=math.ceil(OnNofdata[OntypeIndex]/8.00)
+                            COUNTbuffin=0
+                            TEMPbool=[]
+                            # print("GETNbool=",GETNbool)
+                            # print("Bool round=",GETNround)
+                            state=129  # get N Bool
+                        elif(OntypeProtocol[OntypeIndex]== 8 or OntypeProtocol[OntypeIndex]==16 or OntypeProtocol[OntypeIndex]==32 or OntypeProtocol[OntypeIndex]==64 or OntypeProtocol[OntypeIndex]==18 or OntypeProtocol[OntypeIndex]==116 or OntypeProtocol[OntypeIndex]==132 or OntypeProtocol[OntypeIndex]==164 or OntypeProtocol[OntypeIndex]==111 or OntypeProtocol[OntypeIndex]==222 ):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]
+                            PASSNround=0
+                            COUNTbuffin=0
+                            TEMPbuff=[]
+                            state=200  # get1ofdata
+                        elif(OntypeProtocol[OntypeIndex]== 9 or OntypeProtocol[OntypeIndex]==17 or OntypeProtocol[OntypeIndex]==33 or OntypeProtocol[OntypeIndex]==65 or OntypeProtocol[OntypeIndex]==19 or OntypeProtocol[OntypeIndex]==117 or OntypeProtocol[OntypeIndex]==133 or OntypeProtocol[OntypeIndex]==165 or OntypeProtocol[OntypeIndex]==112 or OntypeProtocol[OntypeIndex]==223 ):
+                            INDEXstore=OntypeIndex
+                            GETNround=OnNofdata[OntypeIndex]
+                            PASSNround=0
+                            COUNTbuffin=0
+                            TEMPbuff=[]
+                            state=201  # getNofdata
+                        elif(OntypeProtocol[OntypeIndex]==254): # Empty
+                            state=44 # main check stop
+                        else:
+                            state=0
+                    else:
+                        state=0
+
+                elif(state==129):
+                    if(Obj_uart.Buff[Indexpre_value]==GETNbool):
+                        state=130
+                    else:
+                        state=0
+                elif(state==130):
+                    TEMPbool.append(int(Obj_uart.Buff[Indexpre_value]))
+                    COUNTbuffin=COUNTbuffin+1
+                    if(COUNTbuffin==GETNround):
+                        for i in range(0,COUNTbuffin):
+                            for j in range(0,GETNbool):
+                                boolnow = (int(TEMPbool[i]) >> (j%8) )& 0x01
+                                # print("boolnow=",boolnow,TEMPbool[i])
+                                if(boolnow==1):
+                                    Ongrab[OntypeIndex][j]= True
+                                else:
+                                    Ongrab[OntypeIndex][j]= False
+
+
+                        state=44
+                    else:
+                        state=130
+
+
+
+                elif(state==120):
+                    if(Obj_uart.Buff[Indexpre_value]==250):
+                        state=121 # to check true and continue
+                    elif(Obj_uart.Buff[Indexpre_value]==47):
+                        state=122 # to check false and continue
+                    elif(Obj_uart.Buff[Indexpre_value]==254):
+                        state=123 # to check true and stop
+                    elif(Obj_uart.Buff[Indexpre_value]==127):
+                        state=124 # to check false and stop
+                    else:
+                        state=0
+                elif(state==121):
+                    if(Obj_uart.Buff[Indexpre_value]==250):
+                        Ongrab[OntypeIndex]=True
+                        # print(Ongrab)
+                        state=6 # confirm continue
+                    else:
+                        state=0
+                elif(state==122):
+                    if(Obj_uart.Buff[Indexpre_value]==47):
+                        Ongrab[OntypeIndex]=False
+                        # print(Ongrab)
+                        state=6 # confirm continue
+                    else:
+                        state=0
+                elif(state==123):
+                    if(Obj_uart.Buff[Indexpre_value]==254):
+                        Ongrab[OntypeIndex]=True
+                        # print(Ongrab)
+                        state=426 # confirm stop
+                    else:
+                        state=0
+                elif(state==124):
+                    if(Obj_uart.Buff[Indexpre_value]==127):
+                        Ongrab[OntypeIndex]=False
+                        # print(Ongrab)
+                        state=426 # confirm stop
+                    else:
+                        state=0
+
+
+
+                elif(state==201):
+                    if(Obj_uart.Buff[Indexpre_value]==GETNround): # is correct N of data
+                        state=200
+                    else:
+                        state=0
+
+                elif(state==200):
+                    TEMPbuff.append(int(Obj_uart.Buff[Indexpre_value]))
+                    COUNTbuffin=COUNTbuffin+1
+
+                    if(COUNTbuffin==OnbyteTograb[OntypeIndex]):
+                        if(GETNround==1):
+                            # print(TEMPbuff)
+                            Ongrab[OntypeIndex]=bufferToType(TEMPbuff,Ontype[OntypeIndex])
+                        else:
+                            Ongrab[OntypeIndex][PASSNround]= bufferToType(TEMPbuff,Ontype[OntypeIndex])
+                        TEMPbuff=[]
+                        COUNTbuffin=0
+                        PASSNround=PASSNround+1
+
+
+
+                    if(PASSNround==GETNround):
+                        state=44 # main check
+                    else:
+                        state=200
+
+
+                elif(state==110):
+                    if(Obj_uart.Buff[Indexpre_value]==GETNround): # is correct N of data
+                        state=111
+                    else:
+                        state=0
+
+                elif(state==111): # getString
+                    if(Obj_uart.Buff[Indexpre_value]==42):
+                        state=112   # check 126 for confirm end of text
+                    else:
+                        bytes_val = bytearray([int(Obj_uart.Buff[Indexpre_value])])
+                        TEMPstring=TEMPstring+str(bytes_val ,'utf-8')
+
+
+
+                elif(state==112): # check 126 for confirm end of string
+                    if(Obj_uart.Buff[Indexpre_value]==126):
+                        if(GETNround==1):
+                            Ongrab[OntypeIndex]=TEMPstring
+                        else:
+                            Ongrab[OntypeIndex][PASSNround]=TEMPstring
+                        PASSNround=PASSNround+1
+                        if(PASSNround==GETNround):
+                            state=44 # check main continue or stop
+                        else:
+                            state=111 # Get moreString
+                    else:
+                        state=0
+
+
+
+                elif(state==44): # main check continue or stop
+                    if(Obj_uart.Buff[Indexpre_value]==42):
+                        state=45
+                    elif(Obj_uart.Buff[Indexpre_value]==126):
+                        state=46
+                    else:
+                        state=0
+
+                elif(state==45): # confirm continue
+                    if(Obj_uart.Buff[Indexpre_value]==42):
+                        # print(Ongrab)
+                        state=6
+                    else:
+                        state=0
+                elif(state==46): # confirm stop
+                    if(Obj_uart.Buff[Indexpre_value]==126):
+                        # print("GET IT ALL",Ongrab)
+                        state=426 # check crc
+                    else:
+                        state=0
+
+                elif(state==426):
+                    if(crcc.FlagCheck(int(Obj_uart.Buff[Indexpre_value]))):
+                        # print(crcc.result())
+                        if(OnMode==4):
+                            Pn.pubbb(Ongrab,OnIdmsg)
+                            state=0
+                        elif(OnMode==11):
+                            indexPipe=select_pipe(pipe)
+                            if(indexPipe!=None):
+                                pipe[indexPipe] = mp.Process(target=Protocol_Srv_client_spin,args=(Obj_uart,OnIdsrv,Ongrab,indexPipe,))
+                                pipe[indexPipe].start()
+                            else:
+                                print("!!!!!!!!  Pipeline service client overflow  !!!!!!!!")
+                            state=0
+                        elif(OnMode==14):
+                            for i in range(0,len(Ongrab)):
+                                sh_res.append(Ongrab[i])
+                            return 1
+                        elif(OnMode==5):
+                            indexPipe=select_pipe(pipe)
+                            if(indexPipe!=None):
+                                pipe[indexPipe] = mp.Process(target=Protocol_action_client_spin,args=(Obj_uart,OnIdaction,Ongrab,indexPipe,))
+                                pipe[indexPipe].start()
+                            else:
+                                print("!!!!!!!!  Pipeline action client overflow  !!!!!!!!")
+                            state=0
+                        elif(OnMode==9):
+                            sh_res.append(Ongrab)
+                            state=0
+                        elif(OnMode==10):
+                            sh_res_2.append(Ongrab)
+                            return 1
+                        else:
+                            state=0
+                    else:
+                        state=0
+
+
+
+
+                crcc.update(int(Indexpre_value))
+                Indexpre_value=(Indexpre_value+1)%1000
+
+            if(ModeEx==1 or ModeEx==3):
+                if(pipe[r_pipe]!= 888 and not pipe[r_pipe].is_alive()):
+                    pipe[r_pipe].join()
+                    pipe[r_pipe]=888
+                    if(ModeEx==1):
+                        print("pipe_srv_client["+str(r_pipe)+"].join Done")
+                    if(ModeEx==3):
+                        print("pipe_action_client["+str(r_pipe)+"].join Done")
+                r_pipe=(r_pipe+1)%16
+            
+
+
+
+        except:
+            print("Protocol recovery.")
+
+
+class CRC8_Xicro():
+    def __init__(self):
+        self.lookup = [0x00,0x5E,0xBC,0xE2,0x61,0x3F,0xDD,0x83,0xC2,0x9C,0x7E,0x20,0xA3,0xFD,0x1F,0x41,0x9D,0xC3,0x21,0x7F,0xFC,0xA2,0x40,0x1E,0x5F,0x01,0xE3,0xBD,0x3E,0x60,0x82,0xDC,0x23,0x7D,0x9F,0xC1,0x42,0x1C,0xFE,0xA0,0xE1,0xBF,0x5D,0x03,0x80,0xDE,0x3C,0x62,0xBE,0xE0,0x02,0x5C,0xDF,0x81,0x63,0x3D,0x7C,0x22,0xC0,0x9E,0x1D,0x43,0xA1,0xFF,0x46,0x18,0xFA,0xA4,0x27,0x79,0x9B,0xC5,0x84,0xDA,0x38,0x66,0xE5,0xBB,0x59,0x07,0xDB,0x85,0x67,0x39,0xBA,0xE4,0x06,0x58,0x19,0x47,0xA5,0xFB,0x78,0x26,0xC4,0x9A,0x65,0x3B,0xD9,0x87,0x04,0x5A,0xB8,0xE6,0xA7,0xF9,0x1B,0x45,0xC6,0x98,0x7A,0x24,0xF8,0xA6,0x44,0x1A,0x99,0xC7,0x25,0x7B,0x3A,0x64,0x86,0xD8,0x5B,0x05,0xE7,0xB9,0x8C,0xD2,0x30,0x6E,0xED,0xB3,0x51,0x0F,0x4E,0x10,0xF2,0xAC,0x2F,0x71,0x93,0xCD,0x11,0x4F,0xAD,0xF3,0x70,0x2E,0xCC,0x92,0xD3,0x8D,0x6F,0x31,0xB2,0xEC,0x0E,0x50,0xAF,0xF1,0x13,0x4D,0xCE,0x90,0x72,0x2C,0x6D,0x33,0xD1,0x8F,0x0C,0x52,0xB0,0xEE,0x32,0x6C,0x8E,0xD0,0x53,0x0D,0xEF,0xB1,0xF0,0xAE,0x4C,0x12,0x91,0xCF,0x2D,0x73,0xCA,0x94,0x76,0x28,0xAB,0xF5,0x17,0x49,0x08,0x56,0xB4,0xEA,0x69,0x37,0xD5,0x8B,0x57,0x09,0xEB,0xB5,0x36,0x68,0x8A,0xD4,0x95,0xCB,0x29,0x77,0xF4,0xAA,0x48,0x16,0xE9,0xB7,0x55,0x0B,0x88,0xD6,0x34,0x6A,0x2B,0x75,0x97,0xC9,0x4A,0x14,0xF6,0xA8,0x74,0x2A,0xC8,0x96,0x15,0x4B,0xA9,0xF7,0xB6,0xE8,0x0A,0x54,0xD7,0x89,0x6B,0x35]
+        self.crc=0
+        self.buff=[]
+        self.index=0
+        self.buffersize=0
+    def resetCRC(self):
+        self.crc=0
+    def Add(self,buffer):
+        CRC=0
+        for i  in  range(0,len(buffer)):
+            CRC = self.lookup[CRC ^ buffer[i]]
+        buffer.append(CRC)
+        return  buffer
+    def CheckOne(self,crc,data):
+        crc = self.lookup[crc ^ data]
+        return crc
+    def CheckList(self,CRC,buffer):
+        for i  in  range(0,len(buffer)):
+            CRC = self.lookup[CRC ^ buffer[i]]
+        return  CRC
+    def begin(self,BUFFER):
+        self.buff=BUFFER
+    def startCom(self,index):
+        self.crc = 0
+        self.crc = self.lookup[self.crc ^ self.buff[index]]
+    def update(self,index):
+        self.crc = self.lookup[self.crc ^ int(self.buff[index])]
+    def result(self):
+        return self.crc
+    def FlagCheck(self,compairValue):
+        if(compairValue==self.crc):
+            return 1
+        else:
+            return 0
+
+
+
+
+
+def Protocol_RosToXicro_spin(Obj_uart): #processer 3
+    rclpy.init()
+    q=Subscriber_node(Obj_uart)
+    rclpy.spin(q)
+
+
+# get
+class Uart():
+    def __init__(self,mp):
+        self.Buff = mp.Array('d',np.zeros(1000))
+        self.index =  mp.Value('i',0)
+        self.Indexpre_value =  mp.Value('i',0)
+        self.Indexpre_value2 =  mp.Value('i',0)
+        self.flag_send =  mp.Value('i',0)
+        self.mana = mp.Manager()
+        self.Buff_SSend = self.mana.list()
+
+!#@ gen_setup_arg
+
+
+        self.ser = self.check_port_open()
+
+!#@ gen_def_check_port_open
+
+
+    def queue_Send(self,send_ll):
+
+        self.Buff_SSend.append(send_ll)
+
+        return 1
+
+def Transmit_uart(Obj_uart): #processer 2
+    print("Start Transmit Xicro_Protocol")
+    while(1):
+        if(len(Obj_uart.Buff_SSend)>0):
+            try:
+!#@ gen_Tx_type
+                Obj_uart.Buff_SSend.pop(0)
+            except:
+                Obj_uart.ser = Obj_uart.check_port_open()
+
+class Srv_client_node(Node):
+    def __init__(self,Obj_uart,OnIdsrv,Ongrab,sequence):
+!#@ gen_name_of_srv_client_node
+        # gen Id mcu
+!#@ gen_self_id_mcu
+        self.Obj_uart = Obj_uart
+        self.xicro_instruction = Xicro_instruction(self.Obj_uart)
+        self.Ongrab=Ongrab
+        self.Idsrv,self.namesrv,self.interfacesrv,self.dataType_srv_req,self.dataName_srv_req,self.datagrab_srv_req,self.NofData_srv_req,self.datatypeProtocol_srv_req,self.bytetograb_srv_req,self.dataType_srv_res,self.dataName_srv_res,self.datagrab_srv_res,self.NofData_srv_res,self.datatypeProtocol_srv_res,self.bytetograb_srv_res,self.timeOut=setup_srv_protocol()
+        for i in range(0,len(self.Idsrv)):
+            if(OnIdsrv==self.Idsrv[i]):
+                self.OnIdsrv_index = i
+                interfacesrv=self.interfacesrv[i].split("/")[1]
+                srv= interfacesrv[0:len(interfacesrv)-4]
+                self.cli = self.create_client(globals()[srv] , "/"+self.namesrv[i])
+
+
+    def send_req(self):
+        srv= self.interfacesrv[self.OnIdsrv_index].split("/")[1][0:len(self.interfacesrv[self.OnIdsrv_index])-4]
+        srv=globals()[srv.split(".")[0]].Request()
+        for i in range(0,len(self.NofData_srv_req[self.OnIdsrv_index])):  # exec data to srv.req
+            for j in range(0,self.NofData_srv_req[self.OnIdsrv_index][i]):
+                if(self.dataName_srv_req[self.OnIdsrv_index][i]=="xxicro_Empty"):
+                    1
+                elif(self.NofData_srv_req[self.OnIdsrv_index][i]==1):
+                    exec("%s = %s" % (("srv."+self.dataName_srv_req[self.OnIdsrv_index][i]) ,"self.Ongrab[i]") )
+                else:
+                    exec("%s = %s" % (("srv."+self.dataName_srv_req[self.OnIdsrv_index][i]+"["+str(j)+"]") ,"self.Ongrab[i][j]") )
+        st=time.time()
+        while not self.cli.wait_for_service(timeout_sec=0.1):
+            self.get_logger().info('service not available, waiting...')
+            if(time.time()-st>=self.timeOut[self.OnIdsrv_index]):
+                print("server not response in : ",self.timeOut[self.OnIdsrv_index]," sec.")
+                try:
+                    self.xicro_instruction._Reset_Buff()
+                    self.xicro_instruction._Reset_CRC()
+                    self.xicro_instruction._SendStart()
+                    self.xicro_instruction._SendSignature(self.Idmcu,12)
+                    self.xicro_instruction._SendIdsrv(self.Idsrv[self.OnIdsrv_index])
+                    self.xicro_instruction._SendNotresponse()
+                    self.xicro_instruction._SendCRC()
+                    self.xicro_instruction._To_Send()
+                except:
+                    1
+                return 1
+        self.future = self.cli.call_async(srv)
+        print("Send "+str(srv)+ " done.")
+        rclpy.spin_until_future_complete(self, self.future,timeout_sec=self.timeOut[self.OnIdsrv_index]-(time.time()-st))
+        # print(self.future.result())
+        if(self.future.result()!=None):
+            try:
+                self.xicro_instruction._Reset_Buff()
+                self.xicro_instruction._Reset_CRC()
+                self.xicro_instruction._SendStart()
+                self.xicro_instruction._SendSignature(self.Idmcu,12)
+                self.xicro_instruction._SendIdsrv(self.Idsrv[self.OnIdsrv_index])
+                self._SendResponse(self.future.result())
+                self.xicro_instruction._SendCRC()
+                self.xicro_instruction._To_Send()
+            except:
+                1
+        else:
+            try:
+                self.xicro_instruction._Reset_Buff()
+                self.xicro_instruction._Reset_CRC()
+                self.xicro_instruction._SendStart()
+                self.xicro_instruction._SendSignature(self.Idmcu,12)
+                self.xicro_instruction._SendIdsrv(self.Idsrv[self.OnIdsrv_index])
+                self.xicro_instruction._SendNone()
+                self.xicro_instruction._SendCRC()
+                self.xicro_instruction._To_Send()
+            except:
+                1
+        return 1
+    def _getdata(self,obj_res,dataname):
+        ldic=locals()
+        comm="data = "+"obj_res."+dataname
+        # print(comm)
+        exec(comm,ldic)
+        data=ldic["data"]
+        # print(data)
+        return data 
+    def _Select_Send(self,datatype,dataname,Nofdata,obj_res,cond):
+        if(datatype=="uint8"):
+            self.xicro_instruction._SendUint8(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="uint16"):
+            self.xicro_instruction._SendUint16(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="uint32"):
+            self.xicro_instruction._SendUint32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="uint64"):
+            self.xicro_instruction._SendUint64(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int8"):
+            self.xicro_instruction._SendInt8(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int16"):
+            self.xicro_instruction._SendInt16(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int32"):
+            self.xicro_instruction._SendInt32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int64"):
+            self.xicro_instruction._SendInt64(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="float32"):
+            self.xicro_instruction._SendFloat32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="string"):
+            self.xicro_instruction._SendString(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="bool" and Nofdata==1):
+            self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),1,cond)
+        elif(datatype=="bool" and Nofdata!=1):
+            self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),Nofdata,cond)
+        elif(datatype=="float64" and ( MCU_TYPE =="arduino" or MCU_TYPE =="esp" )):
+            self.xicro_instruction._SendFloat32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="float64"):
+            self.xicro_instruction._SendFloat64(self._getdata(obj_res,dataname),Nofdata)
+        else:
+            print("ErorType send srv response : ",datatype)
+
+        return 1
+
+    def _SendResponse(self,rr):
+        for i in range(0,len(self.dataType_srv_res[self.OnIdsrv_index])):
+            cond=i<len(self.dataType_srv_res[self.OnIdsrv_index])-1 #check flag continue or stop
+            self._Select_Send(self.dataType_srv_res[self.OnIdsrv_index][i],self.dataName_srv_res[self.OnIdsrv_index][i],self.NofData_srv_res[self.OnIdsrv_index][i],rr,cond)
+            if(self.dataType_srv_res[self.OnIdsrv_index][i]=="bool" and self.NofData_srv_res[self.OnIdsrv_index][i]==1 ):
+                1 # auto by bool xicro protocol  
+            elif(cond):
+                # print("continue")
+                self.xicro_instruction._SendContinue()
+            else:
+                # print("stop")
+                self.xicro_instruction._SendStop()
+        print("response : ",rr," to mcu Done.")
+        return 1
+
+
+
+
+class Action_client_node(Node):
+    def __init__(self,Obj_uart,OnIdaction,Ongrab,sequence):
+!#@ gen_name_of_action_client_node
+        # gen Id mcu
+!#@ gen_self_id_mcu
+        self.Obj_uart = Obj_uart
+        self.xicro_instruction = Xicro_instruction(self.Obj_uart)
+        self.Ongrab=Ongrab
+        self.Idaction_client,self.nameaction_client,self.interfaceaction_client,self.dataType_action_client_req,self.dataName_action_client_req,self.datagrab_action_client_req,self.NofData_action_client_req,self.datatypeProtocol_action_client_req,self.bytetograb_action_client_req,self.dataType_action_client_res,self.dataName_action_client_res,self.datagrab_action_client_res,self.NofData_action_client_res,self.datatypeProtocol_action_client_res,self.bytetograb_action_client_res,self.dataType_action_client_feed,self.dataName_action_client_feed,self.datagrab_action_client_feed,self.NofData_action_client_feed,self.datatypeProtocol_action_client_feed,self.bytetograb_action_client_feed,self.timeOut_action_client = setup_action_client_protocol()
+        for i in range(0,len(self.Idaction_client)):
+            if(OnIdaction==self.Idaction_client[i]):
+                self.OnIdaction_client_index = i
+                interfaceaction_client=self.interfaceaction_client[i].split("/")[1]
+                action= interfaceaction_client[0:len(interfaceaction_client)-7]
+                self._action_client = ActionClient(self,globals()[action] , self.nameaction_client[i])
+        timer_period = 0.1 # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.st=time.time()
+        self.ft = self.timeOut_action_client[self.OnIdaction_client_index]
+        self.flagg = 0
+    def timer_callback(self):
+
+        if(self.flagg==1): # server not response
+            try:
+                self.xicro_instruction._Reset_Buff()
+                self.xicro_instruction._Reset_CRC()
+                self.xicro_instruction._SendStart()
+                self.xicro_instruction._SendSignature(self.Idmcu,6)
+                self.xicro_instruction._SendIdaction(self.Idaction_client[self.OnIdaction_client_index])
+                self.xicro_instruction._SendNotresponse()
+                self.xicro_instruction._SendCRC()
+                self.xicro_instruction._To_Send()
+            except:
+                1
+            self._action_client.destroy()
+            raise SystemExit  
+        elif(self.flagg==2): # server goal reject
+            try:
+                self.xicro_instruction._Reset_Buff()
+                self.xicro_instruction._Reset_CRC()
+                self.xicro_instruction._SendStart()
+                self.xicro_instruction._SendSignature(self.Idmcu,6)
+                self.xicro_instruction._SendIdaction(self.Idaction_client[self.OnIdaction_client_index])
+                self.xicro_instruction._SendGoalreject()
+                self.xicro_instruction._SendCRC()
+                self.xicro_instruction._To_Send()
+            except:
+                1
+            self._action_client.destroy()
+            raise SystemExit     
+        elif(self.flagg==3):
+            self._action_client.destroy()
+            raise SystemExit    
+        elif(time.time()-self.st>=self.ft):
+            try:
+                self.xicro_instruction._Reset_Buff()
+                self.xicro_instruction._Reset_CRC()
+                self.xicro_instruction._SendStart()
+                self.xicro_instruction._SendSignature(self.Idmcu,6)
+                self.xicro_instruction._SendIdaction(self.Idaction_client[self.OnIdaction_client_index])
+                self.xicro_instruction._SendTimeOut()
+                self.xicro_instruction._SendCRC()
+                self.xicro_instruction._To_Send()
+            except:
+                1
+            self._action_client.destroy()
+            raise SystemExit     
+
+    def _getdata(self,obj_res,dataname):
+        ldic=locals()
+        comm="data = "+"obj_res."+dataname
+        # print(comm)
+        exec(comm,ldic)
+        data=ldic["data"]
+        # print(data)
+        return data 
+
+    def _Select_Send(self,datatype,dataname,Nofdata,obj_res,cond):
+        if(datatype=="uint8"):
+            self.xicro_instruction._SendUint8(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="uint16"):
+            self.xicro_instruction._SendUint16(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="uint32"):
+            self.xicro_instruction._SendUint32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="uint64"):
+            self.xicro_instruction._SendUint64(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int8"):
+            self.xicro_instruction._SendInt8(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int16"):
+            self.xicro_instruction._SendInt16(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int32"):
+            self.xicro_instruction._SendInt32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="int64"):
+            self.xicro_instruction._SendInt64(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="float32"):
+            self.xicro_instruction._SendFloat32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="string"):
+            self.xicro_instruction._SendString(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="bool" and Nofdata==1):
+            self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),1,cond)
+        elif(datatype=="bool" and Nofdata!=1):
+            self.xicro_instruction._SendBool(self._getdata(obj_res,dataname),Nofdata,cond)
+        elif(datatype=="float64" and ( MCU_TYPE =="arduino" or MCU_TYPE =="esp" )):
+            self.xicro_instruction._SendFloat32(self._getdata(obj_res,dataname),Nofdata)
+        elif(datatype=="float64"):
+            self.xicro_instruction._SendFloat64(self._getdata(obj_res,dataname),Nofdata)
+        else:
+            print("ErorType send action response : ",datatype)
+
+        return 1
+    def _SendResponse(self,rr):
+        for i in range(0,len(self.dataType_action_client_res[self.OnIdaction_client_index])):
+            cond=i<len(self.dataType_action_client_res[self.OnIdaction_client_index])-1 #check flag continue or stop
+            self._Select_Send(self.dataType_action_client_res[self.OnIdaction_client_index][i],self.dataName_action_client_res[self.OnIdaction_client_index][i],self.NofData_action_client_res[self.OnIdaction_client_index][i],rr,cond)
+            if(self.dataType_action_client_res[self.OnIdaction_client_index][i]=="bool" and self.NofData_action_client_res[self.OnIdaction_client_index][i]==1 ):
+                1 # auto by bool xicro protocol  
+            elif(cond):
+                # print("continue")
+                self.xicro_instruction._SendContinue()
+            else:
+                # print("stop")
+                self.xicro_instruction._SendStop()
+        print("response : ",rr," to mcu Done.")
+        return 1 
+    def _SendFeed(self,rr):
+        for i in range(0,len(self.dataType_action_client_feed[self.OnIdaction_client_index])):
+            cond=i<len(self.dataType_action_client_feed[self.OnIdaction_client_index])-1 #check flag continue or stop
+            self._Select_Send(self.dataType_action_client_feed[self.OnIdaction_client_index][i],self.dataName_action_client_feed[self.OnIdaction_client_index][i],self.NofData_action_client_feed[self.OnIdaction_client_index][i],rr,cond)
+            if(self.dataType_action_client_feed[self.OnIdaction_client_index][i]=="bool" and self.NofData_action_client_feed[self.OnIdaction_client_index][i]==1 ):
+                1 # auto by bool xicro protocol  
+            elif(cond):
+                # print("continue")
+                self.xicro_instruction._SendContinue()
+            else:
+                # print("stop")
+                self.xicro_instruction._SendStop()
+        print("feedback : ",rr," to mcu Done.")
+        return 1      
+    def send_goal(self):
+        action= self.interfaceaction_client[self.OnIdaction_client_index].split("/")[1][0:len(self.interfaceaction_client[self.OnIdaction_client_index])-7]
+        action_goal=globals()[action.split(".")[0]].Goal()
+        for i in range(0,len(self.NofData_action_client_req[self.OnIdaction_client_index])):  # exec data to srv.req
+            for j in range(0,self.NofData_action_client_req[self.OnIdaction_client_index][i]):
+                if(self.dataName_action_client_req[self.OnIdaction_client_index][i]=="xxicro_Empty"):
+                    1
+                elif(self.NofData_action_client_req[self.OnIdaction_client_index][i]==1):
+                    exec("%s = %s" % (("action_goal."+self.dataName_action_client_req[self.OnIdaction_client_index][i]) ,"self.Ongrab[i]") )
+                else:
+                    exec("%s = %s" % (("action_goal."+self.dataName_action_client_req[self.OnIdaction_client_index][i]+"["+str(j)+"]") ,"self.Ongrab[i][j]") )
+        self.st=time.time()
+        while not self._action_client.wait_for_server(timeout_sec=0.1):
+            self.get_logger().info('action server not available, waiting...')
+            if(time.time()-self.st>=self.ft):
+                print("server not response in : ",self.timeOut_action_client[self.OnIdaction_client_index]," sec.")
+                self.flagg=1
+                return 1
+        self.ft=self.ft-(time.time()-self.st)
+        self._send_goal_future = self._action_client.send_goal_async(action_goal, feedback_callback=self.feedback_callback)
+        self._send_goal_future.add_done_callback(self.goal_response_callback)
+        
+        
+    def feedback_callback(self, feedback_msg):
+        feedback = feedback_msg.feedback
+        self.get_logger().info('Received feedback: {0}'.format(feedback.flag))
+        try:
+            self.xicro_instruction._Reset_Buff()
+            self.xicro_instruction._Reset_CRC()
+            self.xicro_instruction._SendStart()
+            self.xicro_instruction._SendSignature(self.Idmcu,6)
+            self.xicro_instruction._SendIdaction(self.Idaction_client[self.OnIdaction_client_index])
+            self._SendFeed(feedback)
+            self.xicro_instruction._SendCRC()
+            self.xicro_instruction._To_Send()
+        except:
+            1
+    
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        print(goal_handle)
+        if not goal_handle.accepted:
+            self.get_logger().info('Goal rejected :(')
+            self.flagg = 2 
+            return 1
+        self.get_logger().info('Goal accepted :)')    
+        try:
+            self.xicro_instruction._Reset_Buff()
+            self.xicro_instruction._Reset_CRC()
+            self.xicro_instruction._SendStart()
+            self.xicro_instruction._SendSignature(self.Idmcu,6)
+            self.xicro_instruction._SendIdaction(self.Idsrv[self.OnIdaction_client_index])
+            self.xicro_instruction._SendGoalaccept()
+            self.xicro_instruction._SendCRC()
+            self.xicro_instruction._To_Send()
+        except:
+            1
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+        
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info('Result: {0}'.format(result.sum))
+        try:
+            self.xicro_instruction._Reset_Buff()
+            self.xicro_instruction._Reset_CRC()
+            self.xicro_instruction._SendStart()
+            self.xicro_instruction._SendSignature(self.Idmcu,7)
+            self.xicro_instruction._SendIdaction(self.Idaction_client[self.OnIdaction_client_index])
+            self._SendResponse(result)
+            self.xicro_instruction._SendCRC()
+            self.xicro_instruction._To_Send()
+        except:
+            1
+        self.flagg = 3
+
+
+
+def Protocol_action_client_spin(Obj_uart,OnIdaction,Ongrab,sequence): # processser n On
+    print("Start Process action Client ID: "+str(OnIdaction))
+    # print(Obj_uart,OnIdaction,Ongrab,sequence)
+    rclpy.init()
+    q=Action_client_node(Obj_uart,OnIdaction,Ongrab,sequence)
+    q.send_goal()
+    try:
+        rclpy.spin(q)
+    except SystemExit:
+        1
+    q.destroy_node()
+    rclpy.shutdown()
+    return sys.exit("End Process action Client ID: "+str(OnIdaction))
+
+
+
+def Protocol_Srv_client_spin(Obj_uart,OnIdsrv,Ongrab,sequence):   # processer n On
+    print("Start Process Client ID: "+str(OnIdsrv))
+    rclpy.init()
+    q=Srv_client_node(Obj_uart,OnIdsrv,Ongrab,sequence)
+    q.send_req()
+    q.destroy_node()
+    return sys.exit("End Process Client ID: "+str(OnIdsrv))
+
+
+
+def Protocol_Srv_client_spin(Obj_uart,OnIdsrv,Ongrab,sequence):   # processer n On
+    print("Start Process Client ID: "+str(OnIdsrv))
+    rclpy.init()
+    q=Srv_client_node(Obj_uart,OnIdsrv,Ongrab,sequence)
+    q.send_req()
+    q.destroy_node()
+    return sys.exit("End Process Client ID: "+str(OnIdsrv))
+
+
+# gen service_server
+!#@ gen_service_server
+
+
+
+def Service_server_xicro_spin(Obj_uart): 
+    rclpy.init()
+    executor = MultiThreadedExecutor(num_threads=6)
+    print("RostoXicro_spin Srv server")
+    # gen srv_server_To_spin
+!#@ gen_service_server_spin
+    try:
+        executor.spin()
+    finally:
+        executor.shutdown()
+        rclpy.shutdown()
+
+    
+    return 1
+
+# gen action server
+!#@ gen_action_server
+
+
+
+def Action_server_xicro_spin(Obj_uart):
+    rclpy.init()
+    executor = MultiThreadedExecutor(num_threads=6)
+    print("RostoXicro_spin Action server")
+    # gen action_server_To_spin
+!#@ gen_action_server_spin
+    try:
+        executor.spin()
+    finally:
+        executor.shutdown()
+        rclpy.shutdown()
+
+    return 1
+def set_args():
+    global MCU_TYPE
+!#@ gen_mcu_type
+    global input
+    input = argparse.ArgumentParser()
+!#@ gen_input_arg
+    input = input.parse_args()
+
+
+def main():
+    try:
+        set_args()
+        Obj_uart = Uart(mp)    # create Uart object
+
+        if(Obj_uart.ser!=0):
+            p  = mp.Process(target=Receive_uart,args=(Obj_uart,))
+            p2 = mp.Process(target=Transmit_uart,args=(Obj_uart,))
+            p3 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,0,888,888,888,888,))   # Spin pub
+            p4 = mp.Process(target=Protocol_RosToXicro_spin,args=(Obj_uart,))                     # Spin callback sub
+            p5 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,1,888,888,888,888,))   # Spin srv Client
+            p6 = mp.Process(target=Service_server_xicro_spin,args=(Obj_uart,))                    # Spin service server 
+            p7 = mp.Process(target=Protocol_XicroToRos_spin,args=(Obj_uart,3,888,888,888,888,))   # Spin action Client
+            p8 = mp.Process(target=Action_server_xicro_spin,args=(Obj_uart,))                     # Spin action server 
+
+            p.start()
+            p2.start()
+            p3.start()
+            p4.start()
+            p5.start()
+            p6.start()
+            p7.start()
+            p8.start()
+
+            while(1):
+                1
+
+
+    except KeyboardInterrupt:
+        if(Obj_uart.ser!=0):
+            p.kill()
+            p2.kill()
+            p3.kill()
+            p4.kill()
+            p5.kill()
+            p6.kill()
+            p7.kill()
+            p8.kill()
+
+
+    finally:
+        print("\n\nXicro all process is shutdown.")
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+

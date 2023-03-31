@@ -34,32 +34,7 @@ if(BUILD_TESTING)
 endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Bool.msg"
-  "msg/Uint8.msg"
-  "msg/Uint16.msg"
-  "msg/Uint32.msg"
-  "msg/Uint64.msg"
-  "msg/Int8.msg"
-  "msg/Int16.msg"
-  "msg/Int32.msg"
-  "msg/Int64.msg"    
-  "msg/Float32.msg"   
-  "msg/Imu.msg"
-  "msg/BatteryState.msg"
-  "msg/JointState.msg"
-  "msg/Temperature.msg"
-  "msg/Point.msg"
-  "msg/Pose.msg"
-  "msg/PoseWithCovariance.msg"
-  "msg/Quaternion.msg"
-  "msg/Pose2D.msg"
-  "msg/Twist.msg"
-  "msg/DemoInput.msg"
-  "msg/DemoOutput.msg"  
-  "msg/Vector3.msg"
-  "msg/Time.msg"
-  "msg/Header.msg"
-
+  "action/Toggle.action"
   
 )
 

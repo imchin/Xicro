@@ -3,7 +3,8 @@ from math import ceil
 import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
-import sys
+import argparse
+
 def gPath(q): # q=1 is install config q=0 is ws/ src pkg
     if(q):
         w=os.popen("ros2 pkg prefix xicro_pkg").read()
@@ -48,7 +49,7 @@ def typetoProtocol(typee,Nofdata):
     elif(typee=="float32"):
         ans=  111
         Nofbyte=4
-    elif(typee=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )): # force float64 to float32
+    elif(typee=="float64" and ( input.mcu_type =="arduino" or input.mcu_type =="esp" )): # force float64 to float32
         ans= 111
         Nofbyte=4
     elif(typee=="float64" ):
@@ -70,17 +71,20 @@ def typetoProtocol(typee,Nofdata):
     else:
         return ans+1,Nofbyte
 
-def get_params(q):
+def get_params(qq):
     try:
-       
+        q=qq
         path = os.path.join(gPath(1), 'setup_xicro.yaml')
         with open(path,'r') as f:
             yml_dict = yaml.safe_load(f)
-            ans = yml_dict.get(q)
-        print('Get '+q+' Done.')
+            q=q.split(".")
+            ans = yml_dict.get(q[0])
+            for i in range(1,len(q)):
+                ans = ans.get(q[i])
+        print('Get '+qq+' Done.')
         return  ans
     except:
-        print('Get '+q+' Failed'+'Something went wrong when opening YAML.')
+        print('Get '+qq+' Failed'+'Something went wrong when opening YAML.')
     return 0
 def checkNofdata(dataType):
     S=dataType.find("[")
@@ -174,7 +178,7 @@ def expandSub(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofDat
     # print("Nofdata :",NofData)
     return id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,NofData,interfacein
 def setup_var_protocol():
-    setup_pub=get_params('Setup_Publisher')
+    setup_pub=get_params('ros.publisher')
     Idmsg=[]
     nametopic=[]
     interfacetopic=[]
@@ -217,7 +221,7 @@ def setup_var_protocol():
             Idmsg,id_topic,nametopic,interfacetopic,dataType,dataName,NofData,interfacein=expandSub(Idmsg,[],nametopic,interfacetopic,dataType,dataName,NofData,interfacein)
     for i in range(0,len(dataType)): # bias float64 to float32
         for j in range(0,len(dataType[i])):
-            if(dataType[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType[i][j]="float32"
                 
     # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
@@ -315,8 +319,8 @@ def setupvarforcreatelib():
     NofData=[]
     interfacein=[]
     try:
-        id_mcu=get_params("Idmcu")
-        Setup_Sub=get_params("Setup_Subscriber")
+        id_mcu=get_params("microcontroller.idmcu")
+        Setup_Sub=get_params("ros.subscriber")
         for i in range(0,len(Setup_Sub)):
             id_topic.append(Setup_Sub[i][0])
             nameofTopic.append(Setup_Sub[i][1])
@@ -450,7 +454,7 @@ def typetofunc(typee,namee,Nofdata,cond):
             return  "        self.xicro_instruction._SendBool(msg."+namee+",1,"+str(cond)+ ")\n"
         elif(typee=="bool" and Nofdata!=1):
             return  "        self.xicro_instruction._SendBool(msg."+namee+","+str(Nofdata)+","+str(cond)+ ")\n"
-        elif(typee=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
+        elif(typee=="float64" and ( input.mcu_type =="arduino" or input.mcu_type =="esp" )):
             return  "        self.xicro_instruction._SendFloat32(msg."+namee+","+str(Nofdata)+ ")\n"    
         elif(typee=="float64"):
             return  "        self.xicro_instruction._SendFloat64(msg."+namee+","+str(Nofdata)+ ")\n"
@@ -489,7 +493,7 @@ def typetofunc_strr(typee,namee,Nofdata,cond,strr):
             return  "        self.xicro_instruction._SendBool("+strr+namee+",1,"+str(cond)+ ")\n"
         elif(typee=="bool" and Nofdata!=1):
             return  "        self.xicro_instruction._SendBool("+strr+namee+","+str(Nofdata)+","+str(cond)+ ")\n"
-        elif(typee=="float64" and ( sys.argv[1] =="arduino" or sys.argv[1] =="esp" )):
+        elif(typee=="float64" and ( input.mcu_type =="arduino" or input.mcu_type =="esp" )):
             return  "        self.xicro_instruction._SendFloat32("+strr+namee+","+str(Nofdata)+ ")\n"    
         elif(typee=="float64"):
             return  "        self.xicro_instruction._SendFloat64("+strr+namee+","+str(Nofdata)+ ")\n"
@@ -639,10 +643,10 @@ def genImport(fw):
     try:
         fw.write("\r# gen import msg\r")
         interfacemsg=[]
-        Setup_Sub=get_params("Setup_Subscriber")
+        Setup_Sub=get_params("ros.subscriber")
         for i in range(0,len(Setup_Sub)):
             interfacemsg.append(Setup_Sub[i][2])
-        Setup_Pub=get_params("Setup_Publisher")
+        Setup_Pub=get_params("ros.publisher")
         for i in range(0,len(Setup_Pub)):
             interfacemsg.append(Setup_Pub[i][2])  
             
@@ -661,7 +665,7 @@ def genImport(fw):
         fw.write("\r\r# gen import srv client\r")
 
         interfacesrv=[]
-        Setup_Srv=get_params("Setup_Srv_client")
+        Setup_Srv=get_params("ros.srv_client")
         for i in range(0,len(Setup_Srv)):
             interfacesrv.append(Setup_Srv[i][2])  
         tt=[]
@@ -680,7 +684,7 @@ def genImport(fw):
         fw.write("\r\r# gen import srv server\r")
 
         interfacesrv=[]
-        Setup_Srv=get_params("Setup_Srv_server")
+        Setup_Srv=get_params("ros.srv_server")
         for i in range(0,len(Setup_Srv)):
             interfacesrv.append(Setup_Srv[i][2])  
         tt=[]
@@ -700,7 +704,7 @@ def genImport(fw):
         fw.write("\r\r# gen import action client\r")
 
         interfaceSetup_Action_client=[]
-        Setup_Action_client=get_params("Setup_Action_client")
+        Setup_Action_client=get_params("ros.action_client")
         for i in range(0,len(Setup_Action_client)):
             interfaceSetup_Action_client.append(Setup_Action_client[i][2])  
         tt=[]
@@ -720,7 +724,7 @@ def genImport(fw):
         fw.write("\r\r# gen import action server\r")
 
         interfaceAction_server=[]
-        Setup_Action_server=get_params("Setup_Action_server")
+        Setup_Action_server=get_params("ros.action_server")
         for i in range(0,len(Setup_Action_server)):
             interfaceAction_server.append(Setup_Action_server[i][2])  
         tt=[]
@@ -745,8 +749,8 @@ def genImport(fw):
     return 1
 
 def setup_srv_protocol():
-    setup_srv=get_params('Setup_Srv_client')
-    Idmcu=get_params("Idmcu")
+    setup_srv=get_params('ros.srv_client')
+    Idmcu=get_params("microcontroller.idmcu")
     Idsrv=[]
     namesrv=[]
     interfacesrv=[]
@@ -832,11 +836,11 @@ def setup_srv_protocol():
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
     for i in range(0,len(dataType_srv_req)): # bias float64 to float32
         for j in range(0,len(dataType_srv_req[i])):
-            if(dataType_srv_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_srv_req[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_srv_req[i][j]="float32"
     for i in range(0,len(dataType_srv_res)): # bias float64 to float32
         for j in range(0,len(dataType_srv_res[i])):
-            if(dataType_srv_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_srv_res[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_srv_res[i][j]="float32"
 
     # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
@@ -894,8 +898,8 @@ def setup_srv_protocol():
     # print(Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res)
     return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut
 def setup_srv_server_protocol():
-    setup_srv=get_params('Setup_Srv_server')
-    Idmcu=get_params("Idmcu")
+    setup_srv=get_params('ros.srv_server')
+    Idmcu=get_params("microcontroller.idmcu")
     Idsrv=[]
     namesrv=[]
     interfacesrv=[]
@@ -981,11 +985,11 @@ def setup_srv_server_protocol():
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
     for i in range(0,len(dataType_srv_req)): # bias float64 to float32
         for j in range(0,len(dataType_srv_req[i])):
-            if(dataType_srv_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_srv_req[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_srv_req[i][j]="float32"
     for i in range(0,len(dataType_srv_res)): # bias float64 to float32
         for j in range(0,len(dataType_srv_res[i])):
-            if(dataType_srv_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_srv_res[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_srv_res[i][j]="float32"
 
     # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
@@ -1044,8 +1048,8 @@ def setup_srv_server_protocol():
     return Idsrv,namesrv,interfacesrv,dataType_srv_req,dataName_srv_req,datagrab_srv_req,NofData_srv_req,datatypeProtocol_srv_req,bytetograb_srv_req,dataType_srv_res,dataName_srv_res,datagrab_srv_res,NofData_srv_res,datatypeProtocol_srv_res,bytetograb_srv_res,timeOut
 
 def setup_action_client_protocol():
-    setup_action=get_params('Setup_Action_client')
-    Idmcu=get_params("Idmcu")
+    setup_action=get_params('ros.action_client')
+    Idmcu=get_params("microcontroller.idmcu")
     Idaction=[]
     nameaction=[]
     interfaceaction=[]
@@ -1168,15 +1172,15 @@ def setup_action_client_protocol():
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
     for i in range(0,len(dataType_action_req)): # bias float64 to float32
         for j in range(0,len(dataType_action_req[i])):
-            if(dataType_action_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_action_req[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_action_req[i][j]="float32"
     for i in range(0,len(dataType_action_res)): # bias float64 to float32
         for j in range(0,len(dataType_action_res[i])):
-            if(dataType_action_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_action_res[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_action_res[i][j]="float32"
     for i in range(0,len(dataType_action_feed)): # bias float64 to float32
         for j in range(0,len(dataType_action_feed[i])):
-            if(dataType_action_feed[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_action_feed[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_action_feed[i][j]="float32"
 
     # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
@@ -1242,8 +1246,8 @@ def setup_action_client_protocol():
     return Idaction,nameaction,interfaceaction,dataType_action_req,dataName_action_req,datagrab_action_req,NofData_action_req,datatypeProtocol_action_req,bytetograb_action_req,dataType_action_res,dataName_action_res,datagrab_action_res,NofData_action_res,datatypeProtocol_action_res,bytetograb_action_res,dataType_action_feed,dataName_action_feed,datagrab_action_feed,NofData_action_feed,datatypeProtocol_action_feed,bytetograb_action_feed,timeOut
 
 def setup_action_server_protocol():
-    setup_action=get_params('Setup_Action_server')
-    Idmcu=get_params("Idmcu")
+    setup_action=get_params('ros.action_server')
+    Idmcu=get_params("microcontroller.idmcu")
     Idaction=[]
     nameaction=[]
     interfaceaction=[]
@@ -1366,15 +1370,15 @@ def setup_action_server_protocol():
     # print(Idsrv,namesrv,interfacesrv,NofData_srv_req,dataType_srv_req,dataName_srv_req,"res",NofData_srv_res,dataType_srv_res,dataName_srv_res)
     for i in range(0,len(dataType_action_req)): # bias float64 to float32
         for j in range(0,len(dataType_action_req[i])):
-            if(dataType_action_req[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_action_req[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_action_req[i][j]="float32"
     for i in range(0,len(dataType_action_res)): # bias float64 to float32
         for j in range(0,len(dataType_action_res[i])):
-            if(dataType_action_res[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_action_res[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_action_res[i][j]="float32"
     for i in range(0,len(dataType_action_feed)): # bias float64 to float32
         for j in range(0,len(dataType_action_feed[i])):
-            if(dataType_action_feed[i][j].split("[")[0] == "float64" and (sys.argv[1]=="arduino" or sys.argv[1]=="esp") ):
+            if(dataType_action_feed[i][j].split("[")[0] == "float64" and (input.mcu_type=="arduino" or input.mcu_type=="esp") ):
                 dataType_action_feed[i][j]="float32"
 
     # # cal  [ byte to grab , dataProtocol , datagrab   ] dataTyperemove_index 
@@ -1448,7 +1452,7 @@ def genclassSrv_server(fw,id_mcu):
         srv_server.append("Srv_server_"+namesrv[i]+"_node")
         fw.write("\nclass Srv_server_"+namesrv[i]+"_node(Node):\r")
         fw.write("    def __init__(self,Obj_uart):\n")
-        fw.write("        super().__init__('xicro_"+get_params("Namespace").lower()+"_"+srv_server[i].lower()+"')\n")
+        fw.write("        super().__init__('xicro_"+get_params("microcontroller.namespace").lower()+"_"+srv_server[i].lower()+"')\n")
         fw.write("        self.Obj_uart=Obj_uart\n")
         fw.write("        self.xicro_instruction = Xicro_instruction(self.Obj_uart)\n")
         fw.write("        self.timeout = "+str(timeOut[i])+"\n")
@@ -1464,7 +1468,7 @@ def genclassAction_server(fw,id_mcu):
         action_server.append("Action_server_"+nameaction_server[i]+"_node")
         fw.write("\nclass Action_server_"+nameaction_server[i]+"_node(Node):\r")
         fw.write("    def __init__(self,Obj_uart):\n")
-        fw.write("        super().__init__('xicro_"+get_params("Namespace").lower()+"_"+nameaction_server[i].lower()+"_node')\n")
+        fw.write("        super().__init__('xicro_"+get_params("microcontroller.namespace").lower()+"_"+nameaction_server[i].lower()+"_node')\n")
         fw.write("        self.Obj_uart=Obj_uart\n")
         fw.write("        self.xicro_instruction = Xicro_instruction(self.Obj_uart)\n")
         fw.write("        self.timeout = "+str(timeOut_action_server[i])+"\n")
@@ -1486,13 +1490,127 @@ def genAction_server_spin(fw,action_server):
     for i in range(0,len(action_server)):
         fw.write("    executor.add_node("+action_server[i].lower()+")\n")
     return 1
+def gen_import_module_connection(fw):
+    try:
+        con_type = get_params("microcontroller.connection.type")
+        if(con_type=="UART"):
+            fw.write("import serial\n")
+        elif(con_type=="UDP"):
+            fw.write("import socket\n")
+        print("gennerate import module connection Done.")
+        return 1
+    except:
+        print("gennerate import module connection Fail.")
+        return 0 
+
+def gen_def_check_port(fw):
+    try:
+        con_type = get_params("microcontroller.connection.type")
+        if(con_type=="UART"):
+            fw.write("    def check_port_open(self):\n")
+            fw.write("        try:\n")
+            fw.write("            ser = serial.Serial(self.port,self.baudrate, timeout=1000 ,stopbits=1)\n")    
+            fw.write("            print(self.port + ': port is Open.')\n")
+            fw.write("            return ser\n")
+            fw.write("        except:\n")
+            fw.write("            print(self.port + ': open port Fail.')\n        return 0\n")
+        elif(con_type=="UDP"):
+            fw.write("    def check_port_open(self):\n")
+            fw.write("        try:\n")
+            fw.write("            ser = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)\n")    
+            fw.write("            ser.setblocking(1)\n")
+            fw.write("            ser.bind(('', self.udp_port_mcu))\n")
+            fw.write("            print('UDP open Connection done.')\n")
+            fw.write("            return ser\n")
+            fw.write("        except:\n")
+            fw.write("            print('UDP open Connection fail.')\n        return 0\n")
+        print("gennerate def check_port Done.")
+        return 1
+    except:
+        print("gennerate def check_port Fail.")
+        return 0 
+def gen_input_arg(fw):
+    try:
+        con_type = get_params("microcontroller.connection.type")
+        if(con_type=="UART"):
+            fw.write('    input.add_argument("-serial_port", help="new connection port",type=str)\n')
+            fw.write('    input.add_argument("-baudrate", help="new baudrate of mcu",type=str)\n')
+        elif(con_type=="UDP"):
+            fw.write('    input.add_argument("-ip_address_mcu",help="new ip address of microcontroller",type=str)\n')
+            fw.write('    input.add_argument("-udp_port_mcu",help="new connection port of microcontroller",type=int)\n')
+        print("gennerate input argument Done.")
+        return 1
+    except:
+        print("gennerate input argument Fail.")
+        return 0 
+def gen_setup_input_arg(fw):
+    try:
+        con_type = get_params("microcontroller.connection.type")
+        if(con_type=="UART"):
+            fw.write("        if( input.serial_port != None):\n")
+            fw.write("            self.port = input.serial_port\n")
+            fw.write('            print("Input new argument uart_port is : "+self.port)\n')
+            fw.write("        else:\n")
+            fw.write('            self.port = "'+get_params("microcontroller.connection.serial_port")+'"\n')
+            fw.write('            print("Input argument Port use is : "+self.port)\n')
+            fw.write("        if( input.baudrate != None):\n")
+            fw.write("            self.baudrate = input.baudrate\n")
+            fw.write('            print("Input new argument baudrate  is : "+str(self.baudrate))\n')
+            fw.write("        else:\n")
+            fw.write('            self.baudrate = '+str(get_params("microcontroller.connection.baudrate"))+'\n')
+            fw.write('            print("Input arg baudrate is : "+str(self.baudrate))\n')
+        elif(con_type=="UDP"):
+            fw.write("        if( input.ip_address_mcu != None):\n")
+            fw.write("            self.ip_address_mcu = input.ip_address_mcu\n")
+            fw.write('            print("Input new argument ip_address_mcu is : "+self.ip_address_mcu)\n')
+            fw.write("        else:\n")
+            fw.write('            self.ip_address_mcu = "'+get_params("microcontroller.connection.ip_address_mcu")+'"\n')
+            fw.write('            print("Input argument ip_address_mcu use is : "+self.ip_address_mcu)\n')
+            fw.write("        if( input.udp_port_mcu != None):\n")
+            fw.write("            self.udp_port_mcu = input.udp_port_mcu\n")
+            fw.write('            print("Input new argument udp_port_mcu  is : "+str(self.udp_port_mcu))\n')
+            fw.write("        else:\n")
+            fw.write('            self.udp_port_mcu = '+str(get_params("microcontroller.connection.udp_port_mcu"))+'\n')
+            fw.write('            print("Input arg udp_port_mcu is : "+str(self.udp_port_mcu))\n')
+        print("gennerate setup input argument Done.")
+        return 1
+    except:
+        print("gennerate setup input argument Fail.")
+        return 0 
+def gen_def_receive_uart(fw):
+    try:
+        con_type = get_params("microcontroller.connection.type")
+        if(con_type=="UART"):
+            fw.write("def Receive_uart(Obj_uart): #processer 1\n")
+            fw.write('    print("Start Receive Xicro_protocol")\n')
+            fw.write("    while(1):\n")
+            fw.write("        try:\n            s = Obj_uart.ser.read()\n")
+            fw.write('            Obj_uart.Buff[Obj_uart.index.value]=(int.from_bytes(s, byteorder="big",signed=0) )\n')
+            fw.write("            Obj_uart.index.value = (Obj_uart.index.value + 1 )%1000\n")
+            fw.write("        except:\n            Obj_uart.ser = Obj_uart.check_port_open()\n")
+        elif(con_type=="UDP"):
+            fw.write("def Receive_uart(Obj_uart): #processer 1\n")
+            fw.write('    print("Start Receive Xicro_protocol")\n')
+            fw.write("    while(1):\n")
+            fw.write("        try:\n            datafromWIFI = Obj_uart.ser.recvfrom(1000)\n")
+            fw.write("            if(datafromWIFI[1][0]==Obj_uart.ip_address_mcu):\n")
+            fw.write('                for i in range(0,len(datafromWIFI[0])):\n')
+            fw.write("                    Obj_uart.Buff[Obj_uart.index.value]=datafromWIFI[0][i]\n")
+            fw.write("                    Obj_uart.index.value = (Obj_uart.index.value + 1 )%1000\n")
+            fw.write("        except:\n            Obj_uart.ser = Obj_uart.check_port_open()\n")
+        print("gennerate def receive Done.")
+        return 1
+    except:
+        print("gennerate def receive Fail.")
+        return 0 
+
+
 def gennerate(): 
     
     id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,Nofdata=setupvarforcreatelib()
     # print(id_mcu,id_topic,nameofTopic,interfacefile,dataType,dataName,Nofdata)
-    pathr= os.path.join(gPath(1)+'/.Xicro_node_preSetup.txt')
-    
-    pathw= os.path.join(gPath(0)+ '/scripts/xicro_node_'+get_params("Namespace")+"_ID_"+str(id_mcu)+'_'+sys.argv[1]+'.py')
+    pathr= os.path.join(gPath(1)+'/.Xicro_node_preSetup.xicro')
+    pathw= os.path.join(gPath(0)+ '/scripts/xicro_node_'+get_params("microcontroller.namespace")+"_ID_"+str(id_mcu)+'_'+input.mcu_type+'.py')
     # os.popen("code " + pathw)
 
     # print(gPath(0)+ '/scripts/xicro_node_'+get_params("Namespace")+"_ID_"+str(id_mcu)+'.py')
@@ -1509,11 +1627,11 @@ def gennerate():
     action_server=[]
     for line in fr:
         c=c+1
-        if(c==452):
+        if(line=="!#@ gen_sub\n"):
             callback=genSub(fw,nameofTopic,interfacefile)
-        elif(c==455):
+        elif(line=="!#@ gen_callback_sub\n"):
             gencallback(fw,callback,id_mcu,id_topic,dataType,dataName,Nofdata)
-        elif(c==80):
+        elif(line=="!#@ gen_setup_function\n"):
             fw.write("\n\ndef setup_var_protocol():\n\n")
             Idmsgg,nametopicc,interfacetopicc,dataTypee,dataNamee,datagrabb,NofDataa,datatypeProtocoll,bytetograbb=setup_var_protocol()
             # cal(get_params("Baudrate"),bytetograbb,NofDataa,nametopicc)
@@ -1534,31 +1652,45 @@ def gennerate():
             fw.write("\n\ndef setup_action_server_protocol():\r\r")
             fw.write("    return "+str(Idaction)+","+str(nameaction)+","+str(interfaceaction)+","+str(dataType_action_req)+","+str(dataName_action_req)+","+str(datagrab_action_req)+","+str(NofData_action_req)+","+str(datatypeProtocol_action_req)+","+str(bytetograb_action_req)+","+str(dataType_action_res)+","+str(dataName_action_res)+","+str(datagrab_action_res)+","+str(NofData_action_res)+","+str(datatypeProtocol_action_res)+","+str(bytetograb_action_res)+","+str(dataType_action_feed)+","+str(dataName_action_feed)+","+str(datagrab_action_feed)+","+str(NofData_action_feed)+","+str(datatypeProtocol_action_feed)+","+str(bytetograb_action_feed)+","+str(timeOut ))
             fw.write("\n\n")
-        elif(c==518):
+        elif(line=="!#@ gen_id_mcu\n"):
             fw.write("    Idmcu = "+str(id_mcu)+"\n")
-        elif(c==12):
+        elif(line=="!#@ gen_import_interface\n"):
             fw.write("# gen Import interfaces\n")
             genImport(fw)
-        elif(c==1172 or c==1038):
+        elif(line=="!#@ gen_self_id_mcu\n"): # 2 
             fw.write("        self.Idmcu = "+str(id_mcu)+"\n")
-        elif(c==1009):
-            fw.write("            ser = serial.Serial(Port,"+ str(get_params("Baudrate"))+", timeout=1000 ,stopbits=1)\n")    
-        elif(c==1421):
+        elif(line=="!#@ gen_def_check_port_open\n"):
+            gen_def_check_port(fw)
+        elif(line=="!#@ gen_service_server\n"):
             srv_server=genclassSrv_server(fw,id_mcu)
-        elif(c==1441):
+        elif(line=="!#@ gen_action_server\n"):
             action_server=genclassAction_server(fw,id_mcu)
-        elif(c==1430):
+        elif(line=="!#@ gen_service_server_spin\n"):
             genSrv_server_spin(fw,srv_server)
-        elif(c==1450):
+        elif(line=="!#@ gen_action_server_spin\n"):
             genAction_server_spin(fw,action_server)
-        elif(c==117):
-            fw.write("        super().__init__('xicro_publisher_node_"+get_params("Namespace").lower()+"')\n" )
-        elif(c==446):
-            fw.write("        super().__init__('xicro_subscriber_node_"+get_params("Namespace").lower()+"')\n" )
-        elif(c==1036):
-            fw.write("        super().__init__('xicro_service_client_node_"+get_params("Namespace").lower()+"_'+str(sequence))")
-        elif(c==1170):
-            fw.write("        super().__init__('xicro_action_client_node_"+get_params("Namespace").lower()+"_'+str(sequence))")
+        elif(line=="!#@ gen_name_of_publisher_node\n"):
+            fw.write("        super().__init__('xicro_publisher_node_"+get_params("microcontroller.namespace").lower()+"')\n" )
+        elif(line=="!#@ gen_name_of_subscriber_node\n"):
+            fw.write("        super().__init__('xicro_subscriber_node_"+get_params("microcontroller.namespace").lower()+"')\n" )
+        elif(line=="!#@ gen_name_of_srv_client_node\n"):
+            fw.write("        super().__init__('xicro_service_client_node_"+get_params("microcontroller.namespace").lower()+"_'+str(sequence))")
+        elif(line=="!#@ gen_name_of_action_client_node\n"):
+            fw.write("        super().__init__('xicro_action_client_node_"+get_params("microcontroller.namespace").lower()+"_'+str(sequence))")
+        elif(line=="!#@ gen_mcu_type\n"):
+            fw.write('    MCU_TYPE = "'+input.mcu_type+'"\n')
+        elif(line=="!#@ gen_input_arg\n"):
+            gen_input_arg(fw)
+        elif(line=="!#@ gen_setup_arg\n"):
+            gen_setup_input_arg(fw)
+        elif(line=="!#@ gen_def_receive_uart\n"):
+            gen_def_receive_uart(fw)
+        elif(line=="!#@ gen_import_module_connection\n"):
+            gen_import_module_connection(fw)
+        elif(line=="!#@ gen_Tx_type\n" and get_params("microcontroller.connection.type") == "UART"):
+            fw.write("                Obj_uart.ser.write(bytearray(Obj_uart.Buff_SSend[0]))\n")
+        elif(line=="!#@ gen_Tx_type\n" and get_params("microcontroller.connection.type") == "UDP"):
+            fw.write("                Obj_uart.ser.sendto(bytearray(Obj_uart.Buff_SSend[0]), (Obj_uart.ip_address_mcu,Obj_uart.udp_port_mcu))\n")
         else:
             fw.write(line)
     return 1
@@ -1572,7 +1704,7 @@ def addentrypoint():
     
 
 
-    entrystring="  scripts/"+"xicro_node_"+get_params("Namespace")+"_ID_"+str(get_params("Idmcu"))+'_'+sys.argv[1]+'.py\n'
+    entrystring="  scripts/"+"xicro_node_"+get_params("microcontroller.namespace")+"_ID_"+str(get_params("microcontroller.idmcu"))+'_'+input.mcu_type+'.py\n'
     stopP=0
     h=0
     for i in range(0,len(entryp)):
@@ -1594,14 +1726,15 @@ def addentrypoint():
 def main():
     flagargs=0
     try:
-        input = sys.argv[1]
-        if(input == "arduino" or input ==  "stm32" or "esp"):
+        global input 
+        input = argparse.ArgumentParser()
+        input.add_argument("-mcu_type", help="type of microcontroller",choices=["arduino","esp","stm32"],type=str,required=1)
+        input = input.parse_args()
+        if(input.mcu_type == "arduino" or input.mcu_type ==  "stm32" or "esp"):
             flagargs=1
-        else:
-            print("*************************************************")
-            print('******  Input argv Only ["arduino","stm32","esp"]  ******')
+    
     except:
-        print('******  Please argv ["arduino","stm32","esp"]  ******')
+        print('******  Please input argv [-mcu_type]  ******')
     if(flagargs):
         try:
             gennerate()

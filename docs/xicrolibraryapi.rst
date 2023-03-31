@@ -21,18 +21,30 @@ The xicro library has to be set up.
         :height: 120
         :alt: Alternative text
         :align: center
+2. Setup Xicro begin 
+    1. Setup Xicro begin with uart
 
-2. Setup Xicro uart
+        .. image:: pic/setuart.png
+            :width: 320
+            :height: 100
+            :alt: Alternative text
+            :align: center
 
-    .. image:: pic/setuart.png
-        :width: 320
-        :height: 100
-        :alt: Alternative text
-        :align: center
+        1\. Set the communication baudrate to match the setting in the file. setup_xicro.yaml.
 
-    1. Set the communication baudrate to match the setting in the file. setup_xicro.yaml.
-    
-    2. Enter the address of the UART to register the xicro library. (function begin())
+        2\. Enter the address of the UART to register the xicro library. (function begin())
+    2. Setup Xicro begin with udp
+
+        .. image:: pic/setudp.png
+            :width: 320
+            :height: 100
+            :alt: Alternative text
+            :align: center
+        1\. Connect to wifi
+
+        2\. Enter the address of the UDP(udpwifi.h) to register the xicro library. (function begin())
+        
+        3\. Enter the udpAddress and udpPort same setup_xicro.yaml to register the xicro library. (function begin())
     
 3. Execute xicro process
 
