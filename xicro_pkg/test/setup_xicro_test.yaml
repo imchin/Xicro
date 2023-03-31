@@ -1,0 +1,19 @@
+microcontroller:
+  idmcu: 1
+  namespace: "action_server"
+  generate_library_Path: "arduino/libraries"  
+  connection:
+    type: "UART"   # ["UART","UDP"]
+    serial_port: "/dev/ttyACM0"  # for UART
+    baudrate: 57620  # for UART
+    ip_address_mcu: ""  # for UDP 
+    udp_port_mcu: 0  # for UDP
+
+ros: # setup ros is reference from microcontroller example publisher is mean microcontroller publish to ros network
+  publisher:  [             [1,"imu","sensor_msgs/Imu.msg"] ,[2,"imu_2","sensor_msgs/Imu.msg"]              ]
+  subscriber: [                           ]
+  srv_client: [                           ]
+  srv_server: [                           ]
+  action_client: [                        ]
+  action_server: [                        ]
+
