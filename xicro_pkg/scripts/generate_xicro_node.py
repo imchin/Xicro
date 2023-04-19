@@ -1456,7 +1456,7 @@ def genclassSrv_server(fw,id_mcu):
         fw.write("        self.Obj_uart=Obj_uart\n")
         fw.write("        self.xicro_instruction = Xicro_instruction(self.Obj_uart)\n")
         fw.write("        self.timeout = "+str(timeOut[i])+"\n")
-        fw.write("        self.maxlen_response = "+str(len(datagrab_srv_res))+"\n\n")
+        fw.write("        self.maxlen_response = "+str(len(datagrab_srv_res[i]))+"\n\n")
         callback_srv=genSrv_server(fw,namesrv,interfacesrv,i)
         fw.write("\n\n    # gen service_server callback\n")
         gencallback_srv_server(fw,callback_srv,id_mcu,Idsrv,dataType_srv_req,dataName_srv_req,NofData_srv_req,dataType_srv_res,dataName_srv_res,NofData_srv_res,i)
